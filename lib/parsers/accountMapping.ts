@@ -4,8 +4,9 @@ import { createClient } from '@/lib/supabase/client'
 export interface AccountMappingRow {
   'Customer - Parent  Account': string
   'Customer - Account  Number': string
-  'Buying Group'?: string
+  '# Locations'?: string
   'EW Program'?: string
+  'Buy Group'?: string
 }
 
 export interface ParseResult {
@@ -40,14 +41,16 @@ export async function parseAndUploadAccountMapping(
             }
 
             // Upsert dealer
+            const locationCount = row['# Locations']?.trim()
             const { error } = await supabase
               .from('dealers')
               .upsert({
                 rep_id: repId,
                 dealer_name: dealerName,
                 account_number: accountNumber,
-                buying_group: row['Buying Group']?.trim() || null,
+                location_count: locationCount ? parseInt(locationCount, 10) : 1,
                 ew_program: row['EW Program']?.trim() || null,
+                buying_group: row['Buy Group']?.trim() || null,
                 last_updated: new Date().toISOString()
               }, {
                 onConflict: 'account_number,rep_id'
