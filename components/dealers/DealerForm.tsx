@@ -96,8 +96,8 @@ export function DealerForm({ dealer }: DealerFormProps) {
 
   return (
     <form action={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-        <div className="sm:col-span-2">
+      <div className="grid grid-cols-1 gap-y-4 gap-x-4">
+        <div>
           <label className="block text-sm font-medium text-gray-700"># Locations</label>
           <input
             type="number"
@@ -107,7 +107,7 @@ export function DealerForm({ dealer }: DealerFormProps) {
           />
         </div>
 
-        <div className="sm:col-span-2">
+        <div>
           <label className="block text-sm font-medium text-gray-700">EW Program</label>
           <input
             type="text"
@@ -117,7 +117,7 @@ export function DealerForm({ dealer }: DealerFormProps) {
           />
         </div>
 
-        <div className="sm:col-span-2">
+        <div>
           <label className="block text-sm font-medium text-gray-700">Buying Group</label>
           <input
             type="text"
