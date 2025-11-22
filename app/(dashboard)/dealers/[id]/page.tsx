@@ -33,18 +33,18 @@ export default async function DealerDetailPage(props: { params: Promise<{ id: st
         <div className="lg:col-span-2 space-y-6">
           {/* Dealer Summary */}
           <div className="bg-white shadow rounded-lg p-4">
-            <div className="flex justify-between text-center">
-              <div className="px-2">
-                <p className="text-xs text-gray-500 uppercase whitespace-nowrap"># Loc</p>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div>
+                <p className="text-xs text-gray-500 uppercase"># Loc</p>
                 <p className="text-lg font-semibold text-gray-900">{dealer.location_count || '-'}</p>
               </div>
-              <div className="px-4">
-                <p className="text-xs text-gray-500 uppercase whitespace-nowrap">EW Prog.</p>
-                <p className="text-lg font-semibold text-gray-900 truncate max-w-[120px]">{dealer.ew_program || '-'}</p>
+              <div>
+                <p className="text-xs text-gray-500 uppercase">EW Prog.</p>
+                <p className="text-lg font-semibold text-gray-900 truncate">{dealer.ew_program || '-'}</p>
               </div>
-              <div className="px-4">
-                <p className="text-xs text-gray-500 uppercase whitespace-nowrap">Buy Group</p>
-                <p className="text-lg font-semibold text-gray-900 truncate max-w-[120px]">{dealer.buying_group || '-'}</p>
+              <div>
+                <p className="text-xs text-gray-500 uppercase">Buy Grp</p>
+                <p className="text-lg font-semibold text-gray-900 truncate">{dealer.buying_group || '-'}</p>
               </div>
             </div>
           </div>
