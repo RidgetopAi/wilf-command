@@ -1,5 +1,5 @@
 import { Dealer } from '@/types'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/server'
 
 export async function getDealers(): Promise<Dealer[]> {
   // DEBUG: Temporarily use Service Role to bypass RLS and see if data exists at all
