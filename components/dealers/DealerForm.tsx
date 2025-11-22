@@ -154,7 +154,7 @@ export function DealerForm({ dealer }: DealerFormProps) {
             <legend className="text-base font-medium text-gray-900 mb-2">
               Stocking Profile
             </legend>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {stockingCategories.map(([key, label]) => (
                 <CategoryItem
                   key={key}
