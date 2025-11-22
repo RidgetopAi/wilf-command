@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { DealerForm } from '@/components/dealers/DealerForm'
 import { ProductMixDashboard } from '@/components/product-mix/ProductMixDashboard'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DealerDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const dealer = await getDealerById(params.id)
