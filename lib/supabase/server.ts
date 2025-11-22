@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-export const createClient = async (useServiceRole = false) => {
+export const createClient = async (useServiceRole: boolean = false) => {
   const cookieStore = await cookies()
   
   const key = useServiceRole 
