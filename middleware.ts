@@ -23,11 +23,15 @@ export async function middleware(request: NextRequest) {
               value,
               ...options,
             })
-            response = NextResponse.next({
-              request: {
-                headers: request.headers,
-              },
-            })
+          })
+          
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          
+          cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set({
               name,
               value,
