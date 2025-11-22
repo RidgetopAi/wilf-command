@@ -5,6 +5,8 @@ interface SalesRow {
   'Customer - Parent  Account': string
   'Product Group - C O L0': string
   'Value': string
+  'Quantity': string
+  'Count': string
 }
 
 interface AggregatedSales {
@@ -13,27 +15,39 @@ interface AggregatedSales {
   sundries_sales: number
   ns_resp_sales: number
   sheet_sales: number
+  adura_qty: number
+  wood_laminate_qty: number
+  sundries_qty: number
+  ns_resp_qty: number
+  sheet_qty: number
+  adura_orders: number
+  wood_laminate_orders: number
+  sundries_orders: number
+  ns_resp_orders: number
+  sheet_orders: number
 }
 
-const PRODUCT_MAPPING: Record<string, keyof AggregatedSales> = {
-  'MANN. ADURA LUXURY TILE': 'adura_sales',
-  'BJELIN': 'wood_laminate_sales',
-  'LAUZON WOOD': 'wood_laminate_sales',
-  'PAD CARPENTER COMPANY': 'sundries_sales',
-  'RESPONSIVE INDUSTRIES': 'ns_resp_sales',
-  'SOMERSET WOOD': 'wood_laminate_sales',
-  'TITEBOND': 'sundries_sales',
-  'MANN. LAMINATE FLOORING': 'wood_laminate_sales',
-  'NORTH STAR FLOORING': 'ns_resp_sales',
-  'PAD FUTURE FOAM': 'sundries_sales',
-  'BURKE-MERCER': 'sundries_sales',
-  'MANNINGTON ON MAIN': 'sundries_sales',
-  'MANN. RESIDENTIAL VINYL': 'sheet_sales',
-  'DIVERSIFIED INDUSTRIES': 'sundries_sales',
-  'SUREPLY AND REVOLUTIONS': 'sundries_sales',
-  'MANN. WOOD': 'wood_laminate_sales',
-  'MANN. RUBBER': 'sundries_sales',
-  'MANN. COMMERCIAL VINYL & VCT': 'sheet_sales'
+type CategoryPrefix = 'adura' | 'wood_laminate' | 'sundries' | 'ns_resp' | 'sheet'
+
+const PRODUCT_MAPPING: Record<string, CategoryPrefix> = {
+  'MANN. ADURA LUXURY TILE': 'adura',
+  'BJELIN': 'wood_laminate',
+  'LAUZON WOOD': 'wood_laminate',
+  'PAD CARPENTER COMPANY': 'sundries',
+  'RESPONSIVE INDUSTRIES': 'ns_resp',
+  'SOMERSET WOOD': 'wood_laminate',
+  'TITEBOND': 'sundries',
+  'MANN. LAMINATE FLOORING': 'wood_laminate',
+  'NORTH STAR FLOORING': 'ns_resp',
+  'PAD FUTURE FOAM': 'sundries',
+  'BURKE-MERCER': 'sundries',
+  'MANNINGTON ON MAIN': 'sundries',
+  'MANN. RESIDENTIAL VINYL': 'sheet',
+  'DIVERSIFIED INDUSTRIES': 'sundries',
+  'SUREPLY AND REVOLUTIONS': 'sundries',
+  'MANN. WOOD': 'wood_laminate',
+  'MANN. RUBBER': 'sundries',
+  'MANN. COMMERCIAL VINYL & VCT': 'sheet'
 }
 
 export async function parseAndUploadMonthlySales(
@@ -82,9 +96,10 @@ export async function parseAndUploadMonthlySales(
         for (const row of results.data) {
           const dealerName = row['Customer - Parent  Account']?.trim()
           const productGroup = row['Product Group - C O L0']?.trim()
-          // Remove commas and parse float
-          const valueStr = row['Value']?.replace(/,/g, '') || '0'
-          const value = parseFloat(valueStr)
+          // Remove commas and parse values
+          const value = parseFloat(row['Value']?.replace(/,/g, '') || '0')
+          const qty = parseFloat(row['Quantity']?.replace(/,/g, '') || '0')
+          const orders = parseInt(row['Count']?.replace(/,/g, '') || '0', 10)
 
           if (!dealerName || !productGroup) continue
 
@@ -98,19 +113,19 @@ export async function parseAndUploadMonthlySales(
           // Initialize if not exists
           if (!accountData.has(accountNum)) {
             accountData.set(accountNum, {
-              adura_sales: 0,
-              wood_laminate_sales: 0,
-              sundries_sales: 0,
-              ns_resp_sales: 0,
-              sheet_sales: 0
+              adura_sales: 0, wood_laminate_sales: 0, sundries_sales: 0, ns_resp_sales: 0, sheet_sales: 0,
+              adura_qty: 0, wood_laminate_qty: 0, sundries_qty: 0, ns_resp_qty: 0, sheet_qty: 0,
+              adura_orders: 0, wood_laminate_orders: 0, sundries_orders: 0, ns_resp_orders: 0, sheet_orders: 0
             })
           }
 
           const current = accountData.get(accountNum)!
-          const mappedCategory = PRODUCT_MAPPING[productGroup]
+          const category = PRODUCT_MAPPING[productGroup]
 
-          if (mappedCategory) {
-            current[mappedCategory] += value
+          if (category) {
+            current[`${category}_sales` as keyof AggregatedSales] += value
+            current[`${category}_qty` as keyof AggregatedSales] += qty
+            current[`${category}_orders` as keyof AggregatedSales] += orders
           }
         }
 
@@ -126,14 +141,14 @@ export async function parseAndUploadMonthlySales(
         console.log('Accounts to update:', accountData.size)
         console.log('Unmatched dealers:', Array.from(unmatchedDealers))
 
-        // 2. Upsert to DB
+        // 3. Upsert to DB
         for (const [accountNumber, sales] of accountData.entries()) {
-          const total = 
-            sales.adura_sales +
-            sales.wood_laminate_sales +
-            sales.sundries_sales +
-            sales.ns_resp_sales +
-            sales.sheet_sales
+          const total_sales =
+            sales.adura_sales + sales.wood_laminate_sales + sales.sundries_sales + sales.ns_resp_sales + sales.sheet_sales
+          const total_qty =
+            sales.adura_qty + sales.wood_laminate_qty + sales.sundries_qty + sales.ns_resp_qty + sales.sheet_qty
+          const total_orders =
+            sales.adura_orders + sales.wood_laminate_orders + sales.sundries_orders + sales.ns_resp_orders + sales.sheet_orders
 
           const payload = {
             rep_id: repId,
@@ -141,13 +156,15 @@ export async function parseAndUploadMonthlySales(
             year,
             month,
             ...sales,
-            total_sales: total,
+            total_sales,
+            total_qty,
+            total_orders,
             // Avoid division by zero
-            adura_pct: total ? (sales.adura_sales / total) * 100 : 0,
-            wood_laminate_pct: total ? (sales.wood_laminate_sales / total) * 100 : 0,
-            sundries_pct: total ? (sales.sundries_sales / total) * 100 : 0,
-            ns_resp_pct: total ? (sales.ns_resp_sales / total) * 100 : 0,
-            sheet_pct: total ? (sales.sheet_sales / total) * 100 : 0,
+            adura_pct: total_sales ? (sales.adura_sales / total_sales) * 100 : 0,
+            wood_laminate_pct: total_sales ? (sales.wood_laminate_sales / total_sales) * 100 : 0,
+            sundries_pct: total_sales ? (sales.sundries_sales / total_sales) * 100 : 0,
+            ns_resp_pct: total_sales ? (sales.ns_resp_sales / total_sales) * 100 : 0,
+            sheet_pct: total_sales ? (sales.sheet_sales / total_sales) * 100 : 0,
             updated_at: new Date().toISOString()
           }
 
