@@ -75,4 +75,5 @@ export async function updateDealer(id: string, formData: FormData) {
   }
 
   revalidatePath(`/dealers/${id}`)
+  revalidatePath('/dealers')
 }
