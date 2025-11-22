@@ -1,0 +1,84 @@
+export type Role = 'rep' | 'manager'
+
+export interface User {
+  id: string
+  email: string
+  full_name: string
+  rep_id: string
+  role: Role
+  created_at: string
+  updated_at: string
+}
+
+export interface Dealer {
+  id: string
+  rep_id: string
+  user_id?: string
+  account_number: string
+  dealer_name: string
+  location_count: number
+  ew_program: string | null
+  buying_group: string | null
+  
+  // Market Segments
+  retail: boolean
+  builder_dealer_controlled: boolean
+  builder_national_spec: boolean
+  commercial_negotiated: boolean
+  commercial_spec_bids: boolean
+  wholesale_to_installers: boolean
+  multifamily_replacement: boolean
+  multifamily_new: boolean
+  
+  // Stocking Categories
+  stocking_wpc: boolean
+  stocking_spc: boolean
+  stocking_wood: boolean
+  stocking_specials: boolean
+  stocking_pad: boolean
+  stocking_rev_ply: boolean
+  
+  notes: string | null
+  last_updated: string
+  created_at: string
+}
+
+export interface ProductMixMonthly {
+  id: string
+  rep_id: string
+  account_number: string
+  year: number
+  month: number
+  
+  // Sales
+  adura_sales: number
+  wood_laminate_sales: number
+  sundries_sales: number
+  ns_resp_sales: number
+  sheet_sales: number
+  
+  // Percentages
+  adura_pct: number
+  wood_laminate_pct: number
+  sundries_pct: number
+  ns_resp_pct: number
+  sheet_pct: number
+  
+  total_sales: number
+  
+  created_at: string
+  updated_at: string
+}
+
+export interface ProductMixTarget {
+  id: string
+  rep_id: string
+  year: number
+  adura_target: number
+  wood_laminate_target: number
+  sundries_target: number
+  ns_resp_target: number
+  sheet_target: number
+  created_at: string
+  updated_at: string
+}
