@@ -1,7 +1,4 @@
 import { login } from './actions'
-import { Button } from '@/components/ui/button' // I haven't created this yet, Shadcn init creates it? No, I need to add it.
-// I'll stick to standard HTML for now if button component is missing, or add it.
-// Shadcn init only created lib/utils. I need to add components.
 
 export default async function LoginPage(props: {
   searchParams: Promise<{ message: string }>
