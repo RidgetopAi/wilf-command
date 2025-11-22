@@ -37,7 +37,7 @@ export async function getDealers(): Promise<Dealer[]> {
 }
 
 export async function getDealerById(id: string): Promise<Dealer | null> {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { data, error } = await supabase
     .from('dealers')
