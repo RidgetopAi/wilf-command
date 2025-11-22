@@ -99,7 +99,7 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm font-medium text-gray-500">Total Sales YTD</p>
           <p className="text-2xl font-bold text-gray-900">{formatCurrency(data.totalSales)}</p>
@@ -109,12 +109,16 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
           <p className="text-2xl font-bold text-gray-900">{formatNumber(data.totalOrders)}</p>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-sm font-medium text-gray-500">Total Quantity</p>
-          <p className="text-2xl font-bold text-gray-900">{formatNumber(Math.round(data.totalQty))}</p>
+          <p className="text-sm font-medium text-gray-500">Dealers</p>
+          <p className="text-2xl font-bold text-gray-900">{data.dealerCount}</p>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-sm font-medium text-gray-500">Active Dealers</p>
-          <p className="text-2xl font-bold text-gray-900">{data.dealerCount}</p>
+          <p className="text-sm font-medium text-gray-500">Active Positions</p>
+          <p className="text-2xl font-bold text-gray-900">{data.totalActivePositions}/{data.totalPossiblePositions}</p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+          <p className="text-sm font-medium text-gray-500">Penetration</p>
+          <p className="text-2xl font-bold text-red-600">{data.overallPenetrationPct}%</p>
         </div>
       </div>
 
@@ -244,6 +248,129 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
           </tbody>
         </table>
       </div>
+
+      {/* Penetration Analytics */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Market Segment Penetration */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">Market Segment Penetration</h3>
+          </div>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Segment</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Engaged</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-red-500 uppercase">Active</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Gap</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">%</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {data.segmentPenetration.map((seg) => (
+                <tr key={seg.label}>
+                  <td className="px-4 py-3 text-sm text-gray-900">{seg.label}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500 text-center">{seg.engaged}</td>
+                  <td className="px-4 py-3 text-sm text-red-600 text-center font-medium">{seg.active}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500 text-center">{seg.gap}</td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end">
+                      <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                        <div className="bg-red-500 h-2 rounded-full" style={{ width: `${seg.penetrationPct}%` }} />
+                      </div>
+                      <span className="text-sm text-gray-900">{seg.penetrationPct}%</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Stocking Penetration */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">Stocking Penetration</h3>
+          </div>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Stocks</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-red-500 uppercase">Ours</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Gap</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">%</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {data.stockingPenetration.map((cat) => (
+                <tr key={cat.label}>
+                  <td className="px-4 py-3 text-sm text-gray-900">{cat.label}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500 text-center">{cat.engaged}</td>
+                  <td className="px-4 py-3 text-sm text-red-600 text-center font-medium">{cat.active}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500 text-center">{cat.gap}</td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end">
+                      <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                        <div className="bg-red-500 h-2 rounded-full" style={{ width: `${cat.penetrationPct}%` }} />
+                      </div>
+                      <span className="text-sm text-gray-900">{cat.penetrationPct}%</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Opportunities */}
+      {data.opportunities.length > 0 && (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">Top Opportunities</h3>
+            <p className="text-sm text-gray-500">Dealers engaged but not yet active with us</p>
+          </div>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dealer</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Opportunity Categories</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase"># Gaps</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {data.opportunities.map((opp) => (
+                <tr key={opp.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <a href={`/dealers/${opp.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-900">
+                      {opp.dealer_name}
+                    </a>
+                    <div className="text-xs text-gray-500">{opp.account_number}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1">
+                      {opp.categories.slice(0, 5).map((cat) => (
+                        <span key={cat} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                          {cat}
+                        </span>
+                      ))}
+                      {opp.categories.length > 5 && (
+                        <span className="text-xs text-gray-500">+{opp.categories.length - 5} more</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      {opp.categories.length}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

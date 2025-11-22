@@ -1,6 +1,21 @@
 import { createClient } from '@/lib/supabase/client'
 import { ProductMixMonthly, Dealer } from '@/types'
 
+export interface CategoryPenetration {
+  label: string
+  engaged: number
+  active: number
+  gap: number
+  penetrationPct: number
+}
+
+export interface DealerOpportunity {
+  dealer_name: string
+  account_number: string
+  id: string
+  categories: string[]
+}
+
 export interface TerritoryOverview {
   totalSales: number
   totalOrders: number
@@ -26,6 +41,13 @@ export interface TerritoryOverview {
     total_sales: number
     total_orders: number
   }>
+  // Penetration analytics
+  segmentPenetration: CategoryPenetration[]
+  stockingPenetration: CategoryPenetration[]
+  totalActivePositions: number
+  totalPossiblePositions: number
+  overallPenetrationPct: number
+  opportunities: DealerOpportunity[]
 }
 
 export async function getTerritoryOverview(repId: string, year: number): Promise<TerritoryOverview> {
@@ -99,6 +121,114 @@ export async function getTerritoryOverview(repId: string, year: number): Promise
     }))
     .sort((a, b) => b.total_sales - a.total_sales)
     .slice(0, 10)
+
+  // Calculate penetration stats from dealers
+  const { data: allDealers } = await supabase
+    .from('dealers')
+    .select('*')
+    .eq('rep_id', repId)
+
+  if (allDealers) {
+    // Market segment definitions
+    const segments: Array<{ key: string; label: string }> = [
+      { key: 'retail', label: 'Retail' },
+      { key: 'builder_dealer_controlled', label: 'Builder (Dealer Controlled)' },
+      { key: 'builder_national_spec', label: 'Builder (National Spec)' },
+      { key: 'commercial_negotiated', label: 'Commercial (Negotiated)' },
+      { key: 'commercial_spec_bids', label: 'Commercial (Spec Bids)' },
+      { key: 'wholesale_to_installers', label: 'Wholesale to Installers' },
+      { key: 'multifamily_replacement', label: 'Multifamily (Replacement)' },
+      { key: 'multifamily_new', label: 'Multifamily (New)' },
+    ]
+
+    const stockingCats: Array<{ key: string; label: string }> = [
+      { key: 'stocking_wpc', label: 'WPC' },
+      { key: 'stocking_spc', label: 'SPC' },
+      { key: 'stocking_wood', label: 'Wood' },
+      { key: 'stocking_specials', label: 'Specials' },
+      { key: 'stocking_pad', label: 'Pad' },
+      { key: 'stocking_rev_ply', label: 'RevPly' },
+    ]
+
+    // Calculate penetration for segments
+    overview.segmentPenetration = segments.map(({ key, label }) => {
+      const engaged = allDealers.filter(d => d[key]).length
+      const active = allDealers.filter(d => d[key] && d[`${key}_active`]).length
+      return {
+        label,
+        engaged,
+        active,
+        gap: engaged - active,
+        penetrationPct: engaged > 0 ? Math.round((active / engaged) * 100) : 0
+      }
+    })
+
+    // Calculate penetration for stocking
+    overview.stockingPenetration = stockingCats.map(({ key, label }) => {
+      const engaged = allDealers.filter(d => d[key]).length
+      const active = allDealers.filter(d => d[key] && d[`${key}_active`]).length
+      return {
+        label,
+        engaged,
+        active,
+        gap: engaged - active,
+        penetrationPct: engaged > 0 ? Math.round((active / engaged) * 100) : 0
+      }
+    })
+
+    // Calculate overall penetration
+    let totalActive = 0
+    let totalPossible = 0
+
+    for (const cat of [...segments, ...stockingCats]) {
+      const engaged = allDealers.filter(d => d[cat.key]).length
+      const active = allDealers.filter(d => d[cat.key] && d[`${cat.key}_active`]).length
+      totalActive += active
+      totalPossible += engaged
+    }
+
+    overview.totalActivePositions = totalActive
+    overview.totalPossiblePositions = totalPossible
+    overview.overallPenetrationPct = totalPossible > 0 ? Math.round((totalActive / totalPossible) * 100) : 0
+
+    // Find opportunities (dealers with engaged but not active categories)
+    const opportunityMap = new Map<string, { dealer: any; categories: string[] }>()
+
+    for (const dealer of allDealers) {
+      const gaps: string[] = []
+
+      for (const { key, label } of [...segments, ...stockingCats]) {
+        if (dealer[key] && !dealer[`${key}_active`]) {
+          gaps.push(label)
+        }
+      }
+
+      if (gaps.length > 0) {
+        opportunityMap.set(dealer.id, {
+          dealer,
+          categories: gaps
+        })
+      }
+    }
+
+    // Sort by most opportunities and take top 10
+    overview.opportunities = Array.from(opportunityMap.values())
+      .sort((a, b) => b.categories.length - a.categories.length)
+      .slice(0, 10)
+      .map(({ dealer, categories }) => ({
+        id: dealer.id,
+        dealer_name: dealer.dealer_name,
+        account_number: dealer.account_number,
+        categories
+      }))
+  } else {
+    overview.segmentPenetration = []
+    overview.stockingPenetration = []
+    overview.totalActivePositions = 0
+    overview.totalPossiblePositions = 0
+    overview.overallPenetrationPct = 0
+    overview.opportunities = []
+  }
 
   return overview
 }
