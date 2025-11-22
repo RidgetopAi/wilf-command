@@ -2,8 +2,11 @@ import { Dealer } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 
 export async function getDealers(): Promise<Dealer[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
   
+  const { data: { user } } = await supabase.auth.getUser()
+  console.log('Fetching dealers for user:', user?.id)
+
   const { data, error } = await supabase
     .from('dealers')
     .select('*')
@@ -14,6 +17,7 @@ export async function getDealers(): Promise<Dealer[]> {
     return []
   }
 
+  console.log(`Found ${data?.length || 0} dealers`)
   return data as Dealer[]
 }
 
