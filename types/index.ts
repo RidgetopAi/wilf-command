@@ -49,23 +49,39 @@ export interface ProductMixMonthly {
   account_number: string
   year: number
   month: number
-  
+
   // Sales
   adura_sales: number
   wood_laminate_sales: number
   sundries_sales: number
   ns_resp_sales: number
   sheet_sales: number
-  
+
+  // Quantity
+  adura_qty: number
+  wood_laminate_qty: number
+  sundries_qty: number
+  ns_resp_qty: number
+  sheet_qty: number
+
+  // Orders
+  adura_orders: number
+  wood_laminate_orders: number
+  sundries_orders: number
+  ns_resp_orders: number
+  sheet_orders: number
+
   // Percentages
   adura_pct: number
   wood_laminate_pct: number
   sundries_pct: number
   ns_resp_pct: number
   sheet_pct: number
-  
+
   total_sales: number
-  
+  total_qty: number
+  total_orders: number
+
   created_at: string
   updated_at: string
 }
