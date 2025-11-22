@@ -108,7 +108,7 @@ export function DealerForm({ dealer }: DealerFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">EW</label>
+          <label className="block text-sm font-medium text-gray-700">EW Prog.</label>
           <input
             type="text"
             name="ew_program"
