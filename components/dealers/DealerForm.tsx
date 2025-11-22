@@ -24,21 +24,20 @@ function CategoryItem({ keyName, label, engaged, active, note }: CategoryItemPro
 
   return (
     <div className={`rounded-lg p-3 space-y-2 ${bothChecked ? 'bg-red-50 border-2 border-red-500' : 'border border-gray-200'}`}>
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+      <div className="text-sm font-medium text-gray-900">{label}</div>
+      <div className="flex items-center gap-4">
+        <label className="flex items-center gap-1.5">
           <input
             id={keyName}
             name={keyName}
             type="checkbox"
             defaultChecked={engaged}
             onChange={(e) => setIsEngaged(e.target.checked)}
-            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded flex-shrink-0"
+            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
           />
-          <label htmlFor={keyName} className="text-sm font-medium text-gray-700 truncate">
-            {label}
-          </label>
-        </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
+          <span className="text-xs text-gray-600">Engaged</span>
+        </label>
+        <label className="flex items-center gap-1.5">
           <input
             id={`${keyName}_active`}
             name={`${keyName}_active`}
@@ -47,10 +46,8 @@ function CategoryItem({ keyName, label, engaged, active, note }: CategoryItemPro
             onChange={(e) => setIsActive(e.target.checked)}
             className="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300 rounded"
           />
-          <label htmlFor={`${keyName}_active`} className="text-xs text-red-600 font-medium">
-            Ours
-          </label>
-        </div>
+          <span className="text-xs text-red-600 font-medium">Ours</span>
+        </label>
       </div>
       <input
         type="text"
@@ -135,9 +132,6 @@ export function DealerForm({ dealer }: DealerFormProps) {
           <fieldset>
             <legend className="text-base font-medium text-gray-900 mb-2">
               Market Segments
-              <span className="ml-2 text-xs font-normal text-gray-500">
-                (left = they engage, <span className="text-red-600">Ours</span> = we're active there)
-              </span>
             </legend>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {marketSegments.map(([key, label]) => (
@@ -159,9 +153,6 @@ export function DealerForm({ dealer }: DealerFormProps) {
           <fieldset>
             <legend className="text-base font-medium text-gray-900 mb-2">
               Stocking Profile
-              <span className="ml-2 text-xs font-normal text-gray-500">
-                (left = they stock, <span className="text-red-600">Ours</span> = our product)
-              </span>
             </legend>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {stockingCategories.map(([key, label]) => (
