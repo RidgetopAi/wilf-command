@@ -20,23 +20,51 @@ export interface Dealer {
   ew_program: string | null
   buying_group: string | null
   
-  // Market Segments
+  // Market Segments (engaged + active with us + note)
   retail: boolean
+  retail_active: boolean
+  retail_note: string | null
   builder_dealer_controlled: boolean
+  builder_dealer_controlled_active: boolean
+  builder_dealer_controlled_note: string | null
   builder_national_spec: boolean
+  builder_national_spec_active: boolean
+  builder_national_spec_note: string | null
   commercial_negotiated: boolean
+  commercial_negotiated_active: boolean
+  commercial_negotiated_note: string | null
   commercial_spec_bids: boolean
+  commercial_spec_bids_active: boolean
+  commercial_spec_bids_note: string | null
   wholesale_to_installers: boolean
+  wholesale_to_installers_active: boolean
+  wholesale_to_installers_note: string | null
   multifamily_replacement: boolean
+  multifamily_replacement_active: boolean
+  multifamily_replacement_note: string | null
   multifamily_new: boolean
-  
-  // Stocking Categories
+  multifamily_new_active: boolean
+  multifamily_new_note: string | null
+
+  // Stocking Categories (stocks + active with us + note)
   stocking_wpc: boolean
+  stocking_wpc_active: boolean
+  stocking_wpc_note: string | null
   stocking_spc: boolean
+  stocking_spc_active: boolean
+  stocking_spc_note: string | null
   stocking_wood: boolean
+  stocking_wood_active: boolean
+  stocking_wood_note: string | null
   stocking_specials: boolean
+  stocking_specials_active: boolean
+  stocking_specials_note: string | null
   stocking_pad: boolean
+  stocking_pad_active: boolean
+  stocking_pad_note: string | null
   stocking_rev_ply: boolean
+  stocking_rev_ply_active: boolean
+  stocking_rev_ply_note: string | null
   
   notes: string | null
   last_updated: string

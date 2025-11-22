@@ -8,6 +8,52 @@ interface DealerFormProps {
   dealer: Dealer
 }
 
+interface CategoryItemProps {
+  keyName: string
+  label: string
+  engaged: boolean
+  active: boolean
+  note: string | null
+}
+
+function CategoryItem({ keyName, label, engaged, active, note }: CategoryItemProps) {
+  return (
+    <div className="border border-gray-200 rounded-lg p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <input
+            id={keyName}
+            name={keyName}
+            type="checkbox"
+            defaultChecked={engaged}
+            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+          />
+          <label htmlFor={keyName} className="ml-2 text-sm font-medium text-gray-700">
+            {label}
+          </label>
+        </div>
+        <div className="flex items-center">
+          <label className="text-xs text-gray-500 mr-2">Active</label>
+          <input
+            id={`${keyName}_active`}
+            name={`${keyName}_active`}
+            type="checkbox"
+            defaultChecked={active}
+            className="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300 rounded"
+          />
+        </div>
+      </div>
+      <input
+        type="text"
+        name={`${keyName}_note`}
+        defaultValue={note || ''}
+        placeholder="Note..."
+        className="block w-full text-xs border-gray-200 rounded py-1 px-2 focus:ring-indigo-500 focus:border-indigo-500"
+      />
+    </div>
+  )
+}
+
 export function DealerForm({ dealer }: DealerFormProps) {
   const [isSaving, setIsSaving] = useState(false)
 
@@ -15,7 +61,6 @@ export function DealerForm({ dealer }: DealerFormProps) {
     setIsSaving(true)
     try {
       await updateDealer(dealer.id, formData)
-      // Optional: Add toast success
     } catch (error) {
       alert('Failed to save changes')
     } finally {
@@ -23,10 +68,30 @@ export function DealerForm({ dealer }: DealerFormProps) {
     }
   }
 
+  const marketSegments: [string, string][] = [
+    ['retail', 'Retail'],
+    ['builder_dealer_controlled', 'Builder (Dealer Controlled)'],
+    ['builder_national_spec', 'Builder (National Spec)'],
+    ['commercial_negotiated', 'Commercial (Negotiated)'],
+    ['commercial_spec_bids', 'Commercial (Spec Bids)'],
+    ['wholesale_to_installers', 'Wholesale to Installers'],
+    ['multifamily_replacement', 'Multifamily (Replacement)'],
+    ['multifamily_new', 'Multifamily (New)'],
+  ]
+
+  const stockingCategories: [string, string][] = [
+    ['stocking_wpc', 'WPC'],
+    ['stocking_spc', 'SPC'],
+    ['stocking_wood', 'Wood'],
+    ['stocking_specials', 'Specials'],
+    ['stocking_pad', 'Pad'],
+    ['stocking_rev_ply', 'RevPly'],
+  ]
+
   return (
     <form action={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-        <div className="sm:col-span-3">
+        <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700"># Locations</label>
           <input
             type="number"
@@ -36,7 +101,7 @@ export function DealerForm({ dealer }: DealerFormProps) {
           />
         </div>
 
-        <div className="sm:col-span-3">
+        <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700">EW Program</label>
           <input
             type="text"
@@ -45,8 +110,8 @@ export function DealerForm({ dealer }: DealerFormProps) {
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           />
         </div>
-        
-        <div className="sm:col-span-6">
+
+        <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700">Buying Group</label>
           <input
             type="text"
@@ -56,72 +121,56 @@ export function DealerForm({ dealer }: DealerFormProps) {
           />
         </div>
 
+        {/* Market Segments */}
         <div className="sm:col-span-6">
-           <fieldset>
-             <legend className="text-base font-medium text-gray-900">Market Segments</legend>
-             <div className="mt-4 grid grid-cols-2 gap-4">
-               {[
-                 ['retail', 'Retail'],
-                 ['builder_dealer_controlled', 'Builder (Controlled)'],
-                 ['builder_national_spec', 'Builder (National Spec)'],
-                 ['commercial_negotiated', 'Commercial (Negotiated)'],
-                 ['commercial_spec_bids', 'Commercial (Spec Bids)'],
-                 ['wholesale_to_installers', 'Wholesale to Installers'],
-                 ['multifamily_replacement', 'Multifamily (Replacement)'],
-                 ['multifamily_new', 'Multifamily (New)'],
-               ].map(([key, label]) => (
-                 <div key={key} className="flex items-start">
-                   <div className="flex items-center h-5">
-                     <input
-                       id={key}
-                       name={key}
-                       type="checkbox"
-                       defaultChecked={!!dealer[key as keyof Dealer]}
-                       className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                     />
-                   </div>
-                   <div className="ml-3 text-sm">
-                     <label htmlFor={key} className="font-medium text-gray-700">{label}</label>
-                   </div>
-                 </div>
-               ))}
-             </div>
-           </fieldset>
+          <fieldset>
+            <legend className="text-base font-medium text-gray-900 mb-2">
+              Market Segments
+              <span className="ml-2 text-xs font-normal text-gray-500">
+                (check if engaged, red checkbox = active with us)
+              </span>
+            </legend>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {marketSegments.map(([key, label]) => (
+                <CategoryItem
+                  key={key}
+                  keyName={key}
+                  label={label}
+                  engaged={!!dealer[key as keyof Dealer]}
+                  active={!!dealer[`${key}_active` as keyof Dealer]}
+                  note={dealer[`${key}_note` as keyof Dealer] as string | null}
+                />
+              ))}
+            </div>
+          </fieldset>
         </div>
-        
+
+        {/* Stocking Profile */}
         <div className="sm:col-span-6 pt-4 border-t border-gray-200">
-           <fieldset>
-             <legend className="text-base font-medium text-gray-900">Stocking Profile</legend>
-             <div className="mt-4 grid grid-cols-2 gap-4">
-               {[
-                 ['stocking_wpc', 'WPC'],
-                 ['stocking_spc', 'SPC'],
-                 ['stocking_wood', 'Wood'],
-                 ['stocking_specials', 'Specials'],
-                 ['stocking_pad', 'Pad'],
-                 ['stocking_rev_ply', 'Rev/Ply'],
-               ].map(([key, label]) => (
-                 <div key={key} className="flex items-start">
-                   <div className="flex items-center h-5">
-                     <input
-                       id={key}
-                       name={key}
-                       type="checkbox"
-                       defaultChecked={!!dealer[key as keyof Dealer]}
-                       className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                     />
-                   </div>
-                   <div className="ml-3 text-sm">
-                     <label htmlFor={key} className="font-medium text-gray-700">{label}</label>
-                   </div>
-                 </div>
-               ))}
-             </div>
-           </fieldset>
+          <fieldset>
+            <legend className="text-base font-medium text-gray-900 mb-2">
+              Stocking Profile
+              <span className="ml-2 text-xs font-normal text-gray-500">
+                (check if they stock, red checkbox = stocks our product)
+              </span>
+            </legend>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {stockingCategories.map(([key, label]) => (
+                <CategoryItem
+                  key={key}
+                  keyName={key}
+                  label={label}
+                  engaged={!!dealer[key as keyof Dealer]}
+                  active={!!dealer[`${key}_active` as keyof Dealer]}
+                  note={dealer[`${key}_note` as keyof Dealer] as string | null}
+                />
+              ))}
+            </div>
+          </fieldset>
         </div>
 
         <div className="sm:col-span-6">
-          <label className="block text-sm font-medium text-gray-700">Notes</label>
+          <label className="block text-sm font-medium text-gray-700">General Notes</label>
           <textarea
             name="notes"
             rows={3}
