@@ -24,7 +24,7 @@ export default async function DealerDetailPage(props: { params: Promise<{ id: st
         {/* Left Column: Dealer Attributes Form */}
         <div className="lg:col-span-1 space-y-6">
            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Dealer Attributes</h2>
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Dealer Attributes v3</h2>
               <DealerForm dealer={dealer} />
            </div>
         </div>

@@ -62,6 +62,7 @@ function CategoryItem({ keyName, label, engaged, active, note }: CategoryItemPro
 
 export function DealerForm({ dealer }: DealerFormProps) {
   const [isSaving, setIsSaving] = useState(false)
+  // v3 form
 
   const handleSubmit = async (formData: FormData) => {
     setIsSaving(true)
