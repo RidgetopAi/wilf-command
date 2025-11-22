@@ -82,7 +82,13 @@ export async function getTerritoryOverview(repId: string, year: number): Promise
     dealerCount: dealers?.length || 0,
     categorySales: { adura: 0, woodLaminate: 0, sundries: 0, nsResp: 0, sheet: 0 },
     categoryOrders: { adura: 0, woodLaminate: 0, sundries: 0, nsResp: 0, sheet: 0 },
-    topDealers: []
+    topDealers: [],
+    segmentPenetration: [],
+    stockingPenetration: [],
+    totalActivePositions: 0,
+    totalPossiblePositions: 0,
+    overallPenetrationPct: 0,
+    opportunities: []
   }
 
   for (const row of (mixData || [])) {
