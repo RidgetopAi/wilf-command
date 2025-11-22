@@ -206,49 +206,6 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
         </table>
       </div>
 
-      {/* Top Dealers */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Top 10 Dealers</h3>
-        </div>
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dealer</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Sales</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Orders</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {data.topDealers.map((dealer, index) => (
-              <tr key={dealer.account_number} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {index + 1}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{dealer.dealer_name}</div>
-                  <div className="text-xs text-gray-500">{dealer.account_number}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
-                  {formatCurrency(dealer.total_sales)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
-                  {formatNumber(dealer.total_orders)}
-                </td>
-              </tr>
-            ))}
-            {data.topDealers.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
-                  No dealer data available yet
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
       {/* Penetration Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Market Segment Penetration */}
@@ -322,6 +279,49 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Top Dealers */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900">Top 10 Dealers</h3>
+        </div>
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dealer</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Sales</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Orders</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {data.topDealers.map((dealer, index) => (
+              <tr key={dealer.account_number} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {index + 1}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">{dealer.dealer_name}</div>
+                  <div className="text-xs text-gray-500">{dealer.account_number}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                  {formatCurrency(dealer.total_sales)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                  {formatNumber(dealer.total_orders)}
+                </td>
+              </tr>
+            ))}
+            {data.topDealers.length === 0 && (
+              <tr>
+                <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
+                  No dealer data available yet
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Opportunities */}
