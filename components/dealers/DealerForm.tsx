@@ -17,27 +17,40 @@ interface CategoryItemProps {
 }
 
 function CategoryItem({ keyName, label, engaged, active, note }: CategoryItemProps) {
+  const [isEngaged, setIsEngaged] = useState(engaged)
+  const [isActive, setIsActive] = useState(active)
+
+  const bothChecked = isEngaged && isActive
+
   return (
-    <div className="border border-gray-200 rounded-lg p-3 space-y-2">
-      <div className="flex items-center gap-2">
-        <input
-          id={keyName}
-          name={keyName}
-          type="checkbox"
-          defaultChecked={engaged}
-          className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded flex-shrink-0"
-        />
-        <label htmlFor={keyName} className="text-sm font-medium text-gray-700 flex-1 min-w-0">
-          {label}
-        </label>
-        <input
-          id={`${keyName}_active`}
-          name={`${keyName}_active`}
-          type="checkbox"
-          defaultChecked={active}
-          className="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300 rounded flex-shrink-0"
-          title="Active with us"
-        />
+    <div className={`rounded-lg p-3 space-y-2 ${bothChecked ? 'bg-red-50 border-2 border-red-500' : 'border border-gray-200'}`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <input
+            id={keyName}
+            name={keyName}
+            type="checkbox"
+            defaultChecked={engaged}
+            onChange={(e) => setIsEngaged(e.target.checked)}
+            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded flex-shrink-0"
+          />
+          <label htmlFor={keyName} className="text-sm font-medium text-gray-700 truncate">
+            {label}
+          </label>
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <input
+            id={`${keyName}_active`}
+            name={`${keyName}_active`}
+            type="checkbox"
+            defaultChecked={active}
+            onChange={(e) => setIsActive(e.target.checked)}
+            className="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300 rounded"
+          />
+          <label htmlFor={`${keyName}_active`} className="text-xs text-red-600 font-medium">
+            Ours
+          </label>
+        </div>
       </div>
       <input
         type="text"
@@ -123,7 +136,7 @@ export function DealerForm({ dealer }: DealerFormProps) {
             <legend className="text-base font-medium text-gray-900 mb-2">
               Market Segments
               <span className="ml-2 text-xs font-normal text-gray-500">
-                (check if engaged, red checkbox = active with us)
+                (left = they engage, <span className="text-red-600">Ours</span> = we're active there)
               </span>
             </legend>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -147,7 +160,7 @@ export function DealerForm({ dealer }: DealerFormProps) {
             <legend className="text-base font-medium text-gray-900 mb-2">
               Stocking Profile
               <span className="ml-2 text-xs font-normal text-gray-500">
-                (check if they stock, red checkbox = stocks our product)
+                (left = they stock, <span className="text-red-600">Ours</span> = our product)
               </span>
             </legend>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

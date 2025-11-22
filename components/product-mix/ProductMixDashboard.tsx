@@ -72,9 +72,11 @@ export function ProductMixDashboard({ repId, accountNumber }: ProductMixDashboar
         monthlyData={monthlyDataMap} 
       />
 
-      <div className="h-80 w-full">
+      <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Monthly Mix Trend</h3>
-        <ProductMixChart data={data} />
+        <div className="h-80 w-full">
+          <ProductMixChart data={data} />
+        </div>
       </div>
     </div>
   )
