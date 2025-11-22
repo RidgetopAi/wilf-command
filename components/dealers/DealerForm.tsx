@@ -98,7 +98,7 @@ export function DealerForm({ dealer }: DealerFormProps) {
     <form action={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 gap-y-4 gap-x-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700"># Locations</label>
+          <label className="block text-sm font-medium text-gray-700"># Loc</label>
           <input
             type="number"
             name="location_count"
@@ -108,7 +108,7 @@ export function DealerForm({ dealer }: DealerFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">EW Program</label>
+          <label className="block text-sm font-medium text-gray-700">EW</label>
           <input
             type="text"
             name="ew_program"
@@ -118,7 +118,7 @@ export function DealerForm({ dealer }: DealerFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Buying Group</label>
+          <label className="block text-sm font-medium text-gray-700">Buy Group</label>
           <input
             type="text"
             name="buying_group"
