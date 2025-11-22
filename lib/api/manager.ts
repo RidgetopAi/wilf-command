@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { User } from '@/types'
 
 export async function getAllReps() {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { data, error } = await supabase
     .from('users')
@@ -15,7 +15,7 @@ export async function getAllReps() {
 }
 
 export async function getManagerStats(repId?: string) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   let query = supabase.from('dealers').select('*', { count: 'exact' })
   
