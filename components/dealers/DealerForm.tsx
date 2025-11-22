@@ -19,36 +19,32 @@ interface CategoryItemProps {
 function CategoryItem({ keyName, label, engaged, active, note }: CategoryItemProps) {
   return (
     <div className="border border-gray-200 rounded-lg p-3 space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <input
-            id={keyName}
-            name={keyName}
-            type="checkbox"
-            defaultChecked={engaged}
-            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
-          />
-          <label htmlFor={keyName} className="ml-2 text-sm font-medium text-gray-700">
-            {label}
-          </label>
-        </div>
-        <div className="flex items-center">
-          <label className="text-xs text-gray-500 mr-2">Active</label>
-          <input
-            id={`${keyName}_active`}
-            name={`${keyName}_active`}
-            type="checkbox"
-            defaultChecked={active}
-            className="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300 rounded"
-          />
-        </div>
+      <div className="flex items-center gap-2">
+        <input
+          id={keyName}
+          name={keyName}
+          type="checkbox"
+          defaultChecked={engaged}
+          className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded flex-shrink-0"
+        />
+        <label htmlFor={keyName} className="text-sm font-medium text-gray-700 flex-1 min-w-0">
+          {label}
+        </label>
+        <input
+          id={`${keyName}_active`}
+          name={`${keyName}_active`}
+          type="checkbox"
+          defaultChecked={active}
+          className="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300 rounded flex-shrink-0"
+          title="Active with us"
+        />
       </div>
       <input
         type="text"
         name={`${keyName}_note`}
         defaultValue={note || ''}
         placeholder="Note..."
-        className="block w-full text-xs border-gray-200 rounded py-1 px-2 focus:ring-indigo-500 focus:border-indigo-500"
+        className="block w-full text-xs border border-gray-200 rounded py-1 px-2 focus:ring-indigo-500 focus:border-indigo-500"
       />
     </div>
   )
