@@ -16,71 +16,15 @@ export default function UploadPage() {
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1) // 1-12
 
   useEffect(() => {
-    getRepId().then(setRepId)
+    getRepId().then((id) => {
+      setRepId(id)
+      if (!id) {
+        setStatus({ type: 'error', message: 'Failed to load Rep Profile. Please ensure your user account is linked to a Rep ID.' })
+      }
+    })
   }, [])
 
-  const handleAccountMappingUpload = async (file: File) => {
-    if (!repId) {
-      setStatus({ type: 'error', message: 'Could not determine Rep ID. Please log in again.' })
-      return
-    }
-    
-    setIsProcessing(true)
-    setStatus(null)
-    
-    try {
-      const result = await parseAndUploadAccountMapping(file, repId)
-      
-      if (result.errors > 0) {
-        setStatus({ 
-          type: 'error', 
-          message: `Import completed with ${result.errors} errors. Success: ${result.success}.`,
-          details: result.details 
-        })
-      } else {
-        setStatus({ 
-          type: 'success', 
-          message: `Successfully imported ${result.success} dealers.` 
-        })
-      }
-    } catch (error) {
-      setStatus({ type: 'error', message: 'Failed to parse CSV file.' })
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
-  const handleSalesUpload = async (file: File) => {
-     if (!repId) {
-      setStatus({ type: 'error', message: 'Could not determine Rep ID. Please log in again.' })
-      return
-    }
-
-    setIsProcessing(true)
-    setStatus(null)
-
-    try {
-      const result = await parseAndUploadMonthlySales(file, repId, selectedYear, selectedMonth)
-       if (result.errors > 0) {
-        setStatus({ 
-          type: 'error', 
-          message: `Import completed with ${result.errors} errors. Success: ${result.success}.`,
-          details: result.details 
-        })
-      } else {
-        setStatus({ 
-          type: 'success', 
-          message: `Successfully updated product mix for ${result.success} accounts.` 
-        })
-      }
-    } catch (error) {
-       setStatus({ type: 'error', message: 'Failed to parse CSV file.' })
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
-  if (!repId) return <div className="p-8">Loading Rep Profile...</div>
+  if (repId === null && !status) return <div className="p-8">Loading Rep Profile...</div>
 
   return (
     <div className="max-w-4xl mx-auto p-8">
