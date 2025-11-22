@@ -17,7 +17,7 @@ export default async function DealerDetailPage(props: { params: Promise<{ id: st
     <div className="px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">{dealer.dealer_name}</h1>
-        <p className="text-sm text-gray-500">Account #{dealer.account_number} - v2</p>
+        <p className="text-sm text-gray-500">Account #{dealer.account_number} - v3</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
