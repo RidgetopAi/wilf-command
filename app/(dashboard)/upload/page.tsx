@@ -24,6 +24,67 @@ export default function UploadPage() {
     })
   }, [])
 
+  const handleAccountMappingUpload = async (file: File) => {
+    if (!repId) {
+      setStatus({ type: 'error', message: 'Could not determine Rep ID. Please log in again.' })
+      return
+    }
+    
+    setIsProcessing(true)
+    setStatus(null)
+    
+    try {
+      const result = await parseAndUploadAccountMapping(file, repId)
+      
+      if (result.errors > 0) {
+        setStatus({ 
+          type: 'error', 
+          message: `Import completed with ${result.errors} errors. Success: ${result.success}.`,
+          details: result.details 
+        })
+      } else {
+        setStatus({ 
+          type: 'success', 
+          message: `Successfully imported ${result.success} dealers.` 
+        })
+      }
+    } catch (error) {
+      setStatus({ type: 'error', message: 'Failed to parse CSV file.' })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleSalesUpload = async (file: File) => {
+     if (!repId) {
+      setStatus({ type: 'error', message: 'Could not determine Rep ID. Please log in again.' })
+      return
+    }
+
+    setIsProcessing(true)
+    setStatus(null)
+
+    try {
+      const result = await parseAndUploadMonthlySales(file, repId, selectedYear, selectedMonth)
+       if (result.errors > 0) {
+        setStatus({ 
+          type: 'error', 
+          message: `Import completed with ${result.errors} errors. Success: ${result.success}.`,
+          details: result.details 
+        })
+      } else {
+        setStatus({ 
+          type: 'success', 
+          message: `Successfully updated product mix for ${result.success} accounts.` 
+        })
+      }
+    } catch (error) {
+       setStatus({ type: 'error', message: 'Failed to parse CSV file.' })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
   if (repId === null && !status) return <div className="p-8">Loading Rep Profile...</div>
 
   return (
