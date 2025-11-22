@@ -62,7 +62,7 @@ export function ProductMixGrid({ year, targets, monthlyData }: ProductMixGridPro
                 {months.map((_, idx) => {
                   const monthNum = idx + 1;
                   const monthData = monthlyData[monthNum];
-                  const actualKey = `${key}_pct`;
+                  const actualKey = `${key}_pct` as keyof typeof monthData;
                   const actual = monthData ? monthData[actualKey] : 0;
                   
                   return (
