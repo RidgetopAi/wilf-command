@@ -29,6 +29,36 @@ interface AggregatedSales {
 
 type CategoryPrefix = 'adura' | 'wood_laminate' | 'sundries' | 'ns_resp' | 'sheet'
 
+// Preview result interface for two-step upload
+export interface SalesPreview {
+  totalSales: number
+  totalOrders: number
+  totalQty: number
+  dealerCount: number
+  rowCount: number
+  byCategory: {
+    adura: number
+    wood_laminate: number
+    sundries: number
+    ns_resp: number
+    sheet: number
+  }
+  byCategoryOrders: {
+    adura: number
+    wood_laminate: number
+    sundries: number
+    ns_resp: number
+    sheet: number
+  }
+  topDealers: Array<{ name: string; sales: number; orders: number }>
+  unmatchedDealers: string[]
+  unmappedProducts: string[]
+  warnings: string[]
+  // Store parsed data for later upload
+  parsedData: Map<string, AggregatedSales>
+  dealerNameMap: Map<string, string> // accountNumber -> dealerName
+}
+
 const PRODUCT_MAPPING: Record<string, CategoryPrefix> = {
   'MANN. ADURA LUXURY TILE': 'adura',
   'BJELIN': 'wood_laminate',
@@ -48,6 +78,209 @@ const PRODUCT_MAPPING: Record<string, CategoryPrefix> = {
   'MANN. WOOD': 'wood_laminate',
   'MANN. RUBBER': 'sundries',
   'MANN. COMMERCIAL VINYL & VCT': 'sheet'
+}
+
+// Preview function - parses CSV without writing to DB
+export async function parseMonthlySalesPreview(
+  file: File,
+  repId: string
+): Promise<SalesPreview> {
+  const supabase = createClient()
+
+  return new Promise((resolve, reject) => {
+    Papa.parse<SalesRow>(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        const accountData = new Map<string, AggregatedSales>()
+        const dealerSales = new Map<string, { name: string; sales: number; orders: number }>()
+        const unmatchedDealers = new Set<string>()
+        const unmappedProducts = new Set<string>()
+        const warnings: string[] = []
+
+        // Fetch dealers for this rep
+        const { data: dealers, error: dealerError } = await supabase
+          .from('dealers')
+          .select('dealer_name, account_number')
+          .eq('rep_id', repId)
+
+        if (dealerError || !dealers) {
+          reject(new Error(`Failed to fetch dealers: ${dealerError?.message}`))
+          return
+        }
+
+        // Create lookup maps
+        const dealerMap = new Map<string, string>() // name -> account
+        const dealerNameMap = new Map<string, string>() // account -> name
+        for (const d of dealers) {
+          dealerMap.set(d.dealer_name, d.account_number)
+          dealerNameMap.set(d.account_number, d.dealer_name)
+        }
+
+        // Aggregate totals
+        let totalSales = 0
+        let totalOrders = 0
+        let totalQty = 0
+        const byCategory = { adura: 0, wood_laminate: 0, sundries: 0, ns_resp: 0, sheet: 0 }
+        const byCategoryOrders = { adura: 0, wood_laminate: 0, sundries: 0, ns_resp: 0, sheet: 0 }
+
+        for (const row of results.data) {
+          const dealerName = row['Customer - Parent  Account']?.trim()
+          const productGroup = row['Product Group - C O L0']?.trim()
+          const value = parseFloat(row['Value']?.replace(/,/g, '') || '0')
+          const qty = parseFloat(row['Quantity']?.replace(/,/g, '') || '0')
+          const orders = parseInt(row['Count']?.replace(/,/g, '') || '0', 10)
+
+          if (!dealerName || !productGroup) continue
+
+          totalSales += value
+          totalOrders += orders
+          totalQty += qty
+
+          const accountNum = dealerMap.get(dealerName)
+          if (!accountNum) {
+            unmatchedDealers.add(dealerName)
+            continue
+          }
+
+          // Track by dealer for top dealers list
+          if (!dealerSales.has(dealerName)) {
+            dealerSales.set(dealerName, { name: dealerName, sales: 0, orders: 0 })
+          }
+          const ds = dealerSales.get(dealerName)!
+          ds.sales += value
+          ds.orders += orders
+
+          // Initialize account data
+          if (!accountData.has(accountNum)) {
+            accountData.set(accountNum, {
+              adura_sales: 0, wood_laminate_sales: 0, sundries_sales: 0, ns_resp_sales: 0, sheet_sales: 0,
+              adura_qty: 0, wood_laminate_qty: 0, sundries_qty: 0, ns_resp_qty: 0, sheet_qty: 0,
+              adura_orders: 0, wood_laminate_orders: 0, sundries_orders: 0, ns_resp_orders: 0, sheet_orders: 0
+            })
+          }
+
+          const current = accountData.get(accountNum)!
+          const category = PRODUCT_MAPPING[productGroup]
+
+          if (category) {
+            current[`${category}_sales` as keyof AggregatedSales] += value
+            current[`${category}_qty` as keyof AggregatedSales] += qty
+            current[`${category}_orders` as keyof AggregatedSales] += orders
+            byCategory[category] += value
+            byCategoryOrders[category] += orders
+          } else {
+            unmappedProducts.add(productGroup)
+          }
+        }
+
+        // Generate warnings
+        if (unmatchedDealers.size > 0) {
+          warnings.push(`${unmatchedDealers.size} dealer(s) not found in database - upload dealer list first`)
+        }
+        if (unmappedProducts.size > 0) {
+          warnings.push(`${unmappedProducts.size} product group(s) not mapped to categories`)
+        }
+
+        // Sort dealers by sales for top list
+        const topDealers = [...dealerSales.values()]
+          .sort((a, b) => b.sales - a.sales)
+          .slice(0, 10)
+
+        resolve({
+          totalSales,
+          totalOrders,
+          totalQty,
+          dealerCount: accountData.size,
+          rowCount: results.data.length,
+          byCategory,
+          byCategoryOrders,
+          topDealers,
+          unmatchedDealers: Array.from(unmatchedDealers),
+          unmappedProducts: Array.from(unmappedProducts),
+          warnings,
+          parsedData: accountData,
+          dealerNameMap
+        })
+      },
+      error: (err) => {
+        reject(new Error(`CSV Parse Error: ${err.message}`))
+      }
+    })
+  })
+}
+
+// Check for existing records that would be overwritten
+export async function checkExistingRecords(
+  repId: string,
+  year: number,
+  month: number
+): Promise<number> {
+  const supabase = createClient()
+  const { count, error } = await supabase
+    .from('product_mix_monthly')
+    .select('*', { count: 'exact', head: true })
+    .eq('rep_id', repId)
+    .eq('year', year)
+    .eq('month', month)
+
+  if (error) {
+    console.error('Error checking existing records:', error)
+    return 0
+  }
+  return count || 0
+}
+
+// Commit preview data to database
+export async function commitSalesData(
+  parsedData: Map<string, AggregatedSales>,
+  repId: string,
+  year: number,
+  month: number
+): Promise<{ success: number; errors: number; details: string[] }> {
+  const supabase = createClient()
+  const result = { success: 0, errors: 0, details: [] as string[] }
+
+  for (const [accountNumber, sales] of parsedData.entries()) {
+    const total_sales =
+      sales.adura_sales + sales.wood_laminate_sales + sales.sundries_sales + sales.ns_resp_sales + sales.sheet_sales
+    const total_qty =
+      sales.adura_qty + sales.wood_laminate_qty + sales.sundries_qty + sales.ns_resp_qty + sales.sheet_qty
+    const total_orders =
+      sales.adura_orders + sales.wood_laminate_orders + sales.sundries_orders + sales.ns_resp_orders + sales.sheet_orders
+
+    const payload = {
+      rep_id: repId,
+      account_number: accountNumber,
+      year,
+      month,
+      ...sales,
+      total_sales,
+      total_qty,
+      total_orders,
+      adura_pct: total_sales ? (sales.adura_sales / total_sales) * 100 : 0,
+      wood_laminate_pct: total_sales ? (sales.wood_laminate_sales / total_sales) * 100 : 0,
+      sundries_pct: total_sales ? (sales.sundries_sales / total_sales) * 100 : 0,
+      ns_resp_pct: total_sales ? (sales.ns_resp_sales / total_sales) * 100 : 0,
+      sheet_pct: total_sales ? (sales.sheet_sales / total_sales) * 100 : 0,
+      updated_at: new Date().toISOString()
+    }
+
+    const { error } = await supabase
+      .from('product_mix_monthly')
+      .upsert(payload, {
+        onConflict: 'rep_id,account_number,year,month'
+      })
+
+    if (error) {
+      result.errors++
+      result.details.push(`Failed ${accountNumber}: ${error.message}`)
+    } else {
+      result.success++
+    }
+  }
+
+  return result
 }
 
 export async function parseAndUploadMonthlySales(
