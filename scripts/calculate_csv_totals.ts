@@ -58,12 +58,12 @@ async function main() {
   }>()
 
   // Also track grand totals
-  const totals = {
+  const totals: Record<string, number> = {
     sales: 0, qty: 0, orders: 0,
     adura: 0, wood_laminate: 0, sundries: 0, ns_resp: 0, sheet: 0,
-    unmapped_products: new Set<string>(),
     row_count: 0
   }
+  const unmapped_products = new Set<string>()
 
   for (const row of result.data) {
     const dealerName = row['Customer - Parent  Account']?.trim()
@@ -100,7 +100,7 @@ async function main() {
       d[category as keyof typeof d] += value
       d[`${category}_orders` as keyof typeof d] += orders
     } else {
-      totals.unmapped_products.add(productGroup)
+      unmapped_products.add(productGroup)
     }
   }
 
@@ -121,9 +121,9 @@ async function main() {
   console.log(`  NS/Responsive:  $${totals.ns_resp.toFixed(2)}`)
   console.log(`  Sheet:          $${totals.sheet.toFixed(2)}`)
 
-  if (totals.unmapped_products.size > 0) {
+  if (unmapped_products.size > 0) {
     console.log('\nWARNING - UNMAPPED PRODUCT GROUPS:')
-    for (const p of totals.unmapped_products) {
+    for (const p of unmapped_products) {
       console.log(`  - ${p}`)
     }
   }
