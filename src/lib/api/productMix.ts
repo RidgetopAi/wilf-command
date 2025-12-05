@@ -267,3 +267,95 @@ export async function getTargets(repId: string, year: number) {
   if (error && error.code !== 'PGRST116') throw error
   return data
 }
+
+// Get territory-wide monthly mix data (aggregated across all dealers)
+export async function getTerritoryMonthlyMix(repId: string, year: number): Promise<ProductMixMonthly[]> {
+  const supabase = createClient()
+
+  const { data, error } = await supabase
+    .from('product_mix_monthly')
+    .select('*')
+    .eq('rep_id', repId)
+    .eq('year', year)
+
+  if (error) throw error
+
+  // Aggregate by month
+  const monthlyTotals = new Map<number, {
+    total_sales: number
+    total_orders: number
+    total_qty: number
+    adura_sales: number
+    wood_laminate_sales: number
+    sundries_sales: number
+    ns_resp_sales: number
+    sheet_sales: number
+  }>()
+
+  for (const row of (data || [])) {
+    const month = row.month
+    const existing = monthlyTotals.get(month) || {
+      total_sales: 0,
+      total_orders: 0,
+      total_qty: 0,
+      adura_sales: 0,
+      wood_laminate_sales: 0,
+      sundries_sales: 0,
+      ns_resp_sales: 0,
+      sheet_sales: 0
+    }
+
+    monthlyTotals.set(month, {
+      total_sales: existing.total_sales + (Number(row.total_sales) || 0),
+      total_orders: existing.total_orders + (Number(row.total_orders) || 0),
+      total_qty: existing.total_qty + (Number(row.total_qty) || 0),
+      adura_sales: existing.adura_sales + (Number(row.adura_sales) || 0),
+      wood_laminate_sales: existing.wood_laminate_sales + (Number(row.wood_laminate_sales) || 0),
+      sundries_sales: existing.sundries_sales + (Number(row.sundries_sales) || 0),
+      ns_resp_sales: existing.ns_resp_sales + (Number(row.ns_resp_sales) || 0),
+      sheet_sales: existing.sheet_sales + (Number(row.sheet_sales) || 0)
+    })
+  }
+
+  // Convert to ProductMixMonthly format with percentages
+  const result: ProductMixMonthly[] = []
+  
+  for (const [month, totals] of monthlyTotals.entries()) {
+    const totalSales = totals.total_sales || 1 // Avoid division by zero
+    
+    result.push({
+      id: `territory-${year}-${month}`,
+      rep_id: repId,
+      account_number: 'TERRITORY',
+      year,
+      month,
+      total_sales: totals.total_sales,
+      total_orders: totals.total_orders,
+      total_qty: totals.total_qty,
+      adura_sales: totals.adura_sales,
+      adura_pct: (totals.adura_sales / totalSales) * 100,
+      adura_orders: 0,
+      adura_qty: 0,
+      wood_laminate_sales: totals.wood_laminate_sales,
+      wood_laminate_pct: (totals.wood_laminate_sales / totalSales) * 100,
+      wood_laminate_orders: 0,
+      wood_laminate_qty: 0,
+      sundries_sales: totals.sundries_sales,
+      sundries_pct: (totals.sundries_sales / totalSales) * 100,
+      sundries_orders: 0,
+      sundries_qty: 0,
+      ns_resp_sales: totals.ns_resp_sales,
+      ns_resp_pct: (totals.ns_resp_sales / totalSales) * 100,
+      ns_resp_orders: 0,
+      ns_resp_qty: 0,
+      sheet_sales: totals.sheet_sales,
+      sheet_pct: (totals.sheet_sales / totalSales) * 100,
+      sheet_orders: 0,
+      sheet_qty: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+  }
+
+  return result.sort((a, b) => a.month - b.month)
+}

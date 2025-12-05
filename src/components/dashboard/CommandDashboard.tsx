@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getTerritoryOverview, TerritoryOverview } from '@/lib/api/productMix'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { getTerritoryOverview, getTerritoryMonthlyMix, TerritoryOverview } from '@/lib/api/productMix'
+import { ProductMixMonthly } from '@/types'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 
 interface CommandDashboardProps {
   repId: string
@@ -34,13 +35,18 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
   const [year, setYear] = useState(new Date().getFullYear())
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<TerritoryOverview | null>(null)
+  const [monthlyMix, setMonthlyMix] = useState<ProductMixMonthly[]>([])
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true)
       try {
-        const overview = await getTerritoryOverview(repId, year)
+        const [overview, mixData] = await Promise.all([
+          getTerritoryOverview(repId, year),
+          getTerritoryMonthlyMix(repId, year)
+        ])
         setData(overview)
+        setMonthlyMix(mixData)
       } catch (err) {
         console.error('Failed to load territory overview:', err)
       } finally {
@@ -165,6 +171,54 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      </div>
+
+      {/* Monthly Mix Trend - Territory Wide */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Monthly Mix Trend (All Dealers)</h3>
+        <div className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={(() => {
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                return months.map((monthName, idx) => {
+                  const monthNum = idx + 1
+                  const found = monthlyMix.find(d => d.month === monthNum)
+                  if (found) {
+                    return {
+                      name: monthName,
+                      Adura: found.adura_pct,
+                      'Wood & Lam': found.wood_laminate_pct,
+                      Sundries: found.sundries_pct,
+                      'NS & Resp': found.ns_resp_pct,
+                      Sheet: found.sheet_pct
+                    }
+                  }
+                  return {
+                    name: monthName,
+                    Adura: 0,
+                    'Wood & Lam': 0,
+                    Sundries: 0,
+                    'NS & Resp': 0,
+                    Sheet: 0
+                  }
+                })
+              })()}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis unit="%" />
+              <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
+              <Legend />
+              <Bar dataKey="Adura" stackId="a" fill="#4f46e5" />
+              <Bar dataKey="Wood & Lam" stackId="a" fill="#10b981" />
+              <Bar dataKey="Sundries" stackId="a" fill="#f59e0b" />
+              <Bar dataKey="NS & Resp" stackId="a" fill="#ef4444" />
+              <Bar dataKey="Sheet" stackId="a" fill="#8b5cf6" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 

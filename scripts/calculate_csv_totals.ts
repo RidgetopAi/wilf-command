@@ -1,7 +1,7 @@
 #!/usr/bin/env npx tsx
 /**
  * Calculate totals from a monthly sales CSV file
- * Usage: npx tsx scripts/calculate_csv_totals.ts parsing-files/monthly-sales-202505.csv
+ * Usage: npx tsx scripts/calculate_csv_totals.ts data/monthly-sales-202505.csv
  */
 
 import * as fs from 'fs'

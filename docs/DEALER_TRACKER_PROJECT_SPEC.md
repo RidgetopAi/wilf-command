@@ -344,6 +344,28 @@ Quantity                            (string with commas)
 Count                               (integer)
 ```
 
+**Import Logic:**
+1. Parse CSV (handle comma-separated numbers in Value/Cost/Profit/Quantity)
+2. Group by `Account Number` and `Product Group`
+3. Map `Product Group` to 5 categories using mapping table
+4. Sum sales by category for each account
+5. Calculate total sales per account
+6. Calculate percentages: `(category_sales / total_sales) * 100`
+7. Upsert into `product_mix_monthly` table
+
+**Percentage Calculation Example:**
+```javascript
+// For account WOOD111GAL~00000 in November 2025:
+// Adura: $22,671.06
+// NS & Resp: $20,320.47
+// Wood & Laminate: $14,758.47
+// Total: $57,749.00
+
+const adura_pct = (22671.06 / 57749.00) * 100; // = 39.26%
+const ns_resp_pct = (20320.47 / 57749.00) * 100; // = 35.19%
+const wood_lam_pct = (14758.47 / 57749.00) * 100; // = 25.55%
+```
+
 ### Account Number Mapping (One-Time Setup)
 
 **File Format:** `account-number-group.csv`
@@ -355,3 +377,614 @@ Customer - Account  Number          (account number)
 Buying Group                        (optional)
 EW Program                          (optional)
 ```
+
+**Import Logic:**
+1. Parse CSV
+2. For each row, create or update dealer record
+3. Set: account_number, dealer_name, buying_group, ew_program
+4. Assign to appropriate rep_id (user specifies during import)
+5. Initialize all boolean fields to false (rep will update manually)
+
+---
+
+## APPLICATION FEATURES
+
+### Phase 1: Core MVP (Days 1-3)
+
+#### 1. Authentication
+- Supabase Auth (email/password)
+- Protected routes
+- User profile page
+
+#### 2. Dealer Management
+**Rep Dashboard:**
+- Table view of all my dealers
+- Columns: Account #, Dealer Name, # Locations, EW Program, Buying Group
+- Search/filter functionality
+- Click row to edit
+
+**Dealer Detail/Edit Form:**
+- All fields from dealers table
+- Checkboxes for market segments (8 types)
+- Checkboxes for stocking categories (6 types)
+- Notes field
+- Save button (with auto-timestamp)
+
+#### 3. CSV Import - "Wilf Command"
+**Initial Dealer Setup:**
+- Upload `account-number-group.csv`
+- Specify rep_id
+- Preview import (show # of new dealers, # of updates)
+- Confirm and import
+
+**Monthly Sales Upload:**
+- Drag-and-drop or file picker for `monthly-sales-*.csv`
+- Automatically detect month/year from filename or data
+- Parse and calculate product mix
+- Preview: show accounts to be updated with new percentages
+- Confirm and import
+- Success message with summary stats
+
+**Parser Requirements:**
+- Handle comma-separated numbers (strip commas before parsing)
+- Handle percentage strings (strip '%' sign)
+- Validate account numbers exist in dealers table
+- Calculate percentages to 2 decimal places
+- Upsert logic (update if exists, insert if new)
+
+#### 4. Product Mix Dashboard
+**Rep View:**
+- Dropdown to select year (2025, 2026)
+- Display target percentages (editable inline or in modal)
+- Monthly grid showing:
+  - Rows: 5 product categories
+  - Columns: Jan-Dec + Quarterly totals + YTD
+  - Cells: actual percentage from monthly sales
+- Color coding:
+  - Green: meeting/exceeding target
+  - Yellow: within 5% of target
+  - Red: more than 5% below target
+
+**Charts:**
+- Stacked bar chart: monthly product mix breakdown
+- Line chart: category trends over time
+- Comparison view: 2025 vs 2026
+
+#### 5. Manager Dashboard
+**Aggregate View:**
+- Dropdown to filter by rep (or "All Reps")
+- Summary stats: total dealers, total sales, avg product mix
+- Table of all dealers (with rep name column)
+- Export to Excel button
+
+**Rep Comparison View:**
+- Side-by-side product mix comparison across reps
+- Identify top performers by category
+- Filter by EW program or buying group
+
+### Phase 2: Enhancements (Days 4-5)
+
+#### 6. Polish & UX
+- Loading states for CSV uploads
+- Toast notifications for success/error
+- Responsive design (mobile-friendly tables)
+- Keyboard shortcuts (Ctrl+S to save, etc.)
+- Bulk edit mode for dealers
+
+#### 7. Reporting
+- PDF export of dealer list
+- Monthly product mix report (PDF)
+- Email digest (optional stretch goal)
+
+#### 8. Testing
+- Test with Brian's real data (37 dealers)
+- Upload November 2025 sales CSV
+- Verify calculations match expected percentages
+- Test RLS policies (rep can't see other rep's data)
+
+---
+
+## TECH STACK DETAILS
+
+### Frontend (Next.js 14)
+```
+app/
+├── (auth)/
+│   ├── login/
+│   └── signup/
+├── (dashboard)/
+│   ├── dealers/
+│   │   ├── page.tsx          # Dealer list
+│   │   └── [id]/page.tsx     # Dealer detail/edit
+│   ├── product-mix/
+│   │   └── page.tsx          # Product mix dashboard
+│   ├── upload/
+│   │   └── page.tsx          # CSV upload ("Wilf Command")
+│   └── layout.tsx
+├── components/
+│   ├── dealers/
+│   │   ├── DealerTable.tsx
+│   │   ├── DealerForm.tsx
+│   │   └── DealerFilters.tsx
+│   ├── product-mix/
+│   │   ├── ProductMixGrid.tsx
+│   │   ├── ProductMixChart.tsx
+│   │   └── TargetEditor.tsx
+│   ├── upload/
+│   │   ├── CSVUploader.tsx
+│   │   └── ImportPreview.tsx
+│   └── ui/ (shadcn components)
+├── lib/
+│   ├── supabase/
+│   │   ├── client.ts
+│   │   └── server.ts
+│   ├── parsers/
+│   │   ├── monthlySales.ts
+│   │   └── accountMapping.ts
+│   └── utils.ts
+└── api/
+    ├── dealers/
+    ├── product-mix/
+    └── upload/
+```
+
+### Dependencies
+```json
+{
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@supabase/supabase-js": "^2.38.0",
+    "@supabase/auth-helpers-nextjs": "^0.8.0",
+    "papaparse": "^5.4.1",
+    "recharts": "^2.10.0",
+    "date-fns": "^3.0.0",
+    "zod": "^3.22.0",
+    "react-hook-form": "^7.48.0",
+    "@hookform/resolvers": "^3.3.0",
+    "tailwindcss": "^3.3.0",
+    "@shadcn/ui": "latest",
+    "lucide-react": "^0.292.0"
+  }
+}
+```
+
+### Supabase Setup
+1. Create new Supabase project
+2. Run SQL schema from above
+3. Enable email auth
+4. Create initial user (Brian: rep_id='78', role='rep')
+5. Set up environment variables:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=
+   SUPABASE_SERVICE_ROLE_KEY=
+   ```
+
+---
+
+## CSV PARSER IMPLEMENTATION
+
+### Monthly Sales Parser
+```typescript
+// lib/parsers/monthlySales.ts
+
+import Papa from 'papaparse';
+
+interface SalesRow {
+  accountNumber: string;
+  productGroup: string;
+  value: number;
+}
+
+interface ProductMix {
+  accountNumber: string;
+  adura_sales: number;
+  wood_laminate_sales: number;
+  sundries_sales: number;
+  ns_resp_sales: number;
+  sheet_sales: number;
+  total_sales: number;
+  adura_pct: number;
+  wood_laminate_pct: number;
+  sundries_pct: number;
+  ns_resp_pct: number;
+  sheet_pct: number;
+}
+
+const PRODUCT_MAPPING = {
+  'MANN. ADURA LUXURY TILE': 'adura',
+  'BJELIN': 'wood_laminate',
+  'LAUZON WOOD': 'wood_laminate',
+  // ... rest of mapping
+};
+
+export async function parseMonthlySalesCSV(
+  file: File,
+  repId: string,
+  year: number,
+  month: number
+): Promise<ProductMix[]> {
+  return new Promise((resolve, reject) => {
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        try {
+          // 1. Clean and map data
+          const salesData = results.data.map((row: any) => ({
+            accountNumber: row['Customer - Parent  Account  Number'],
+            productGroup: row['Product Group - C O L0'],
+            value: parseFloat(row['Value'].replace(/,/g, ''))
+          }));
+
+          // 2. Group by account and aggregate by product category
+          const aggregated = new Map<string, any>();
+          
+          salesData.forEach(({ accountNumber, productGroup, value }) => {
+            const category = PRODUCT_MAPPING[productGroup];
+            if (!category) {
+              console.warn(`Unmapped product group: ${productGroup}`);
+              return;
+            }
+
+            if (!aggregated.has(accountNumber)) {
+              aggregated.set(accountNumber, {
+                accountNumber,
+                adura_sales: 0,
+                wood_laminate_sales: 0,
+                sundries_sales: 0,
+                ns_resp_sales: 0,
+                sheet_sales: 0,
+              });
+            }
+
+            const account = aggregated.get(accountNumber);
+            account[`${category}_sales`] += value;
+          });
+
+          // 3. Calculate totals and percentages
+          const productMixData: ProductMix[] = Array.from(aggregated.values()).map(account => {
+            const total = 
+              account.adura_sales +
+              account.wood_laminate_sales +
+              account.sundries_sales +
+              account.ns_resp_sales +
+              account.sheet_sales;
+
+            return {
+              ...account,
+              total_sales: total,
+              adura_pct: total > 0 ? (account.adura_sales / total) * 100 : 0,
+              wood_laminate_pct: total > 0 ? (account.wood_laminate_sales / total) * 100 : 0,
+              sundries_pct: total > 0 ? (account.sundries_sales / total) * 100 : 0,
+              ns_resp_pct: total > 0 ? (account.ns_resp_sales / total) * 100 : 0,
+              sheet_pct: total > 0 ? (account.sheet_sales / total) * 100 : 0,
+            };
+          });
+
+          resolve(productMixData);
+        } catch (error) {
+          reject(error);
+        }
+      },
+      error: (error) => reject(error)
+    });
+  });
+}
+
+// Function to upsert to Supabase
+export async function upsertProductMix(
+  supabase: any,
+  repId: string,
+  year: number,
+  month: number,
+  productMixData: ProductMix[]
+) {
+  const records = productMixData.map(data => ({
+    rep_id: repId,
+    account_number: data.accountNumber,
+    year,
+    month,
+    ...data
+  }));
+
+  const { data, error } = await supabase
+    .from('product_mix_monthly')
+    .upsert(records, {
+      onConflict: 'rep_id,account_number,year,month'
+    });
+
+  if (error) throw error;
+  return data;
+}
+```
+
+---
+
+## UI COMPONENT SPECIFICATIONS
+
+### Dealer Table Component
+```typescript
+// components/dealers/DealerTable.tsx
+
+interface Dealer {
+  id: string;
+  account_number: string;
+  dealer_name: string;
+  location_count: number;
+  ew_program: string | null;
+  buying_group: string | null;
+}
+
+interface DealerTableProps {
+  dealers: Dealer[];
+  onEdit: (dealer: Dealer) => void;
+}
+
+export function DealerTable({ dealers, onEdit }: DealerTableProps) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Account #</TableHead>
+          <TableHead>Dealer Name</TableHead>
+          <TableHead># Locations</TableHead>
+          <TableHead>EW Program</TableHead>
+          <TableHead>Buying Group</TableHead>
+          <TableHead>Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {dealers.map(dealer => (
+          <TableRow key={dealer.id} onClick={() => onEdit(dealer)} className="cursor-pointer hover:bg-muted">
+            <TableCell>{dealer.account_number}</TableCell>
+            <TableCell className="font-medium">{dealer.dealer_name}</TableCell>
+            <TableCell>{dealer.location_count}</TableCell>
+            <TableCell>{dealer.ew_program || '-'}</TableCell>
+            <TableCell>{dealer.buying_group || '-'}</TableCell>
+            <TableCell>
+              <Button variant="ghost" size="sm">Edit</Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+```
+
+### Product Mix Grid Component
+```typescript
+// components/product-mix/ProductMixGrid.tsx
+
+interface ProductMixGridProps {
+  year: number;
+  repId: string;
+  targets: {
+    adura_target: number;
+    wood_laminate_target: number;
+    sundries_target: number;
+    ns_resp_target: number;
+    sheet_target: number;
+  };
+  monthlyData: {
+    [month: number]: {
+      adura_pct: number;
+      wood_laminate_pct: number;
+      sundries_pct: number;
+      ns_resp_pct: number;
+      sheet_pct: number;
+    };
+  };
+}
+
+export function ProductMixGrid({ year, targets, monthlyData }: ProductMixGridProps) {
+  const categories = [
+    { key: 'adura', label: 'Adura' },
+    { key: 'wood_laminate', label: 'Wood & Laminate' },
+    { key: 'sundries', label: 'Sundries' },
+    { key: 'ns_resp', label: 'NS & Resp' },
+    { key: 'sheet', label: 'Sheet' }
+  ];
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  const getColorClass = (actual: number, target: number) => {
+    if (actual >= target) return 'bg-green-100 text-green-800';
+    if (actual >= target - 5) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-red-100 text-red-800';
+  };
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse">
+        <thead>
+          <tr>
+            <th className="border p-2">Category</th>
+            <th className="border p-2">Target</th>
+            {months.map(month => (
+              <th key={month} className="border p-2">{month}</th>
+            ))}
+            <th className="border p-2">Q1</th>
+            <th className="border p-2">Q2</th>
+            <th className="border p-2">Q3</th>
+            <th className="border p-2">Q4</th>
+            <th className="border p-2">YTD</th>
+          </tr>
+        </thead>
+        <tbody>
+          {categories.map(({ key, label }) => (
+            <tr key={key}>
+              <td className="border p-2 font-medium">{label}</td>
+              <td className="border p-2 text-center">{targets[`${key}_target`]}%</td>
+              {months.map((_, idx) => {
+                const monthNum = idx + 1;
+                const actual = monthlyData[monthNum]?.[`${key}_pct`] || 0;
+                const target = targets[`${key}_target`];
+                return (
+                  <td key={monthNum} className={`border p-2 text-center ${getColorClass(actual, target)}`}>
+                    {actual > 0 ? `${actual.toFixed(2)}%` : '-'}
+                  </td>
+                );
+              })}
+              {/* Calculate quarterly averages */}
+              <td className="border p-2 text-center bg-gray-50">Q1</td>
+              <td className="border p-2 text-center bg-gray-50">Q2</td>
+              <td className="border p-2 text-center bg-gray-50">Q3</td>
+              <td className="border p-2 text-center bg-gray-50">Q4</td>
+              <td className="border p-2 text-center bg-gray-100 font-bold">YTD</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+```
+
+### CSV Uploader Component
+```typescript
+// components/upload/CSVUploader.tsx
+
+interface CSVUploaderProps {
+  onUpload: (file: File) => Promise<void>;
+  uploadType: 'dealers' | 'sales';
+}
+
+export function CSVUploader({ onUpload, uploadType }: CSVUploaderProps) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'text/csv') {
+      setIsProcessing(true);
+      await onUpload(file);
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div
+      className={`border-2 border-dashed rounded-lg p-8 text-center ${
+        isDragging ? 'border-primary bg-primary/5' : 'border-gray-300'
+      }`}
+      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={handleDrop}
+    >
+      {isProcessing ? (
+        <div>Processing...</div>
+      ) : (
+        <>
+          <Upload className="mx-auto h-12 w-12 text-gray-400" />
+          <p className="mt-2 text-sm text-gray-600">
+            Drag and drop your {uploadType === 'dealers' ? 'account mapping' : 'monthly sales'} CSV here
+          </p>
+          <p className="mt-1 text-xs text-gray-500">or click to browse</p>
+          <input
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onUpload(file);
+            }}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## DEPLOYMENT CHECKLIST
+
+### Vercel Setup
+1. Connect GitHub repo
+2. Set environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+3. Deploy
+
+### Supabase Setup
+1. Run all SQL schemas
+2. Create initial user for Brian (rep_id='78')
+3. Test RLS policies
+4. Verify CSV upload works
+
+### Testing Checklist
+- [ ] Login/logout works
+- [ ] Rep can only see their dealers
+- [ ] Manager can see all dealers
+- [ ] CSV upload (account mapping) creates dealers
+- [ ] CSV upload (monthly sales) updates product mix
+- [ ] Percentages calculate correctly
+- [ ] Product mix grid displays properly
+- [ ] Charts render
+- [ ] Mobile responsive
+- [ ] Export to Excel works
+
+---
+
+## INITIAL DATA SETUP
+
+**Brian's Profile:**
+```sql
+INSERT INTO users (email, full_name, rep_id, role)
+VALUES ('brian@example.com', 'Brian', '78', 'rep');
+```
+
+**First Import:**
+1. Upload `account-number-group.csv` (37 dealers)
+2. Upload November 2025 sales CSV
+3. Verify all 37 dealers appear
+4. Verify product mix percentages match expected values
+
+---
+
+## FUTURE ENHANCEMENTS (Post-Launch)
+
+- Email notifications for monthly upload reminders
+- Automated Sales-I API integration (if available)
+- Advanced analytics (trend analysis, forecasting)
+- Mobile app
+- Bulk dealer import from multiple reps simultaneously
+- Integration with CRM for notes/follow-ups
+- Goal tracking and alerts
+
+---
+
+## NOTES FOR CLAUDE CODE
+
+**Priority Order:**
+1. Database schema + RLS policies (get this perfect first)
+2. CSV parsing logic (test with provided CSV files)
+3. Dealer CRUD operations
+4. Product mix display
+5. Upload UI
+6. Polish and testing
+
+**Key Files to Reference:**
+- `account-number-group.csv` - dealer master data with account numbers
+- `monthly-sales-20252111.csv` - monthly sales data format
+- `1763777833432_sales-i-report-cross-over.md` - product group mapping
+- `EW_Rep_Diversification_Summary_Master_Territory_Spread_and_Mix.xlsx` - original Excel template
+
+**Critical Success Factors:**
+1. RLS must work perfectly (reps cannot see each other's data)
+2. CSV parser must handle all edge cases (missing data, commas in numbers, etc.)
+3. Percentage calculations must be accurate to 2 decimals
+4. UI must be fast and responsive (this is used daily)
+
+**Brian's Rep ID: `'78'`**
+**Number of dealers: 37**
+
+**Go build this! 🚀**
