@@ -146,9 +146,9 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
           <p className="text-sm font-medium text-gray-500">Active Positions</p>
           <p className="text-2xl font-bold text-gray-900">{overview.totalActivePositions}/{overview.totalPossiblePositions}</p>
         </div>
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-emerald-500">
           <p className="text-sm font-medium text-gray-500">Penetration</p>
-          <p className="text-2xl font-bold text-red-600">{overview.overallPenetrationPct}%</p>
+          <p className="text-2xl font-bold text-emerald-600">{overview.overallPenetrationPct}%</p>
         </div>
       </div>
 
@@ -271,9 +271,9 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Segment</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Engaged</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-red-500 uppercase">Active</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Gap</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-amber-600 uppercase">Engaged</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-emerald-600 uppercase">Ours</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-rose-500 uppercase">Gap</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">%</th>
               </tr>
             </thead>
@@ -281,13 +281,13 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
               {overview.segmentPenetration.map((seg) => (
                 <tr key={seg.label}>
                   <td className="px-4 py-3 text-sm text-gray-900">{seg.label}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500 text-center">{seg.engaged}</td>
-                  <td className="px-4 py-3 text-sm text-red-600 text-center font-medium">{seg.active}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500 text-center">{seg.gap}</td>
+                  <td className="px-4 py-3 text-sm text-amber-600 text-center">{seg.engaged}</td>
+                  <td className="px-4 py-3 text-sm text-emerald-600 text-center font-medium">{seg.active}</td>
+                  <td className="px-4 py-3 text-sm text-rose-500 text-center">{seg.gap}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end">
                       <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                        <div className="bg-red-500 h-2 rounded-full" style={{ width: `${seg.penetrationPct}%` }} />
+                        <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${seg.penetrationPct}%` }} />
                       </div>
                       <span className="text-sm text-gray-900">{seg.penetrationPct}%</span>
                     </div>
@@ -307,9 +307,9 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Stocks</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-red-500 uppercase">Ours</th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Gap</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-amber-600 uppercase">Stocks</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-emerald-600 uppercase">Ours</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-rose-500 uppercase">Gap</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">%</th>
               </tr>
             </thead>
@@ -317,13 +317,13 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
               {overview.stockingPenetration.map((cat) => (
                 <tr key={cat.label}>
                   <td className="px-4 py-3 text-sm text-gray-900">{cat.label}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500 text-center">{cat.engaged}</td>
-                  <td className="px-4 py-3 text-sm text-red-600 text-center font-medium">{cat.active}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500 text-center">{cat.gap}</td>
+                  <td className="px-4 py-3 text-sm text-amber-600 text-center">{cat.engaged}</td>
+                  <td className="px-4 py-3 text-sm text-emerald-600 text-center font-medium">{cat.active}</td>
+                  <td className="px-4 py-3 text-sm text-rose-500 text-center">{cat.gap}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end">
                       <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                        <div className="bg-red-500 h-2 rounded-full" style={{ width: `${cat.penetrationPct}%` }} />
+                        <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${cat.penetrationPct}%` }} />
                       </div>
                       <span className="text-sm text-gray-900">{cat.penetrationPct}%</span>
                     </div>

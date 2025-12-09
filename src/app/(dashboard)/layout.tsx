@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { MobileTabBar } from '@/components/layout/MobileTabBar'
 
 export default async function DashboardLayout({
   children,
@@ -66,11 +67,13 @@ export default async function DashboardLayout({
         </div>
       </nav>
 
-      <main>
+      <main className="pb-16 sm:pb-0">
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           {children}
         </div>
       </main>
+
+      <MobileTabBar isManager={isManager} />
     </div>
   )
 }

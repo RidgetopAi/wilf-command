@@ -20,10 +20,17 @@ function CategoryItem({ keyName, label, engaged, active, note }: CategoryItemPro
   const [isEngaged, setIsEngaged] = useState(engaged)
   const [isActive, setIsActive] = useState(active)
 
-  const bothChecked = isEngaged && isActive
+  const isOurs = isActive
+  const isGap = isEngaged && !isActive
+
+  const getBorderStyle = () => {
+    if (isOurs) return 'bg-emerald-50 border-2 border-emerald-500'
+    if (isGap) return 'bg-amber-50 border-2 border-amber-400'
+    return 'border border-gray-200'
+  }
 
   return (
-    <div className={`rounded-lg p-4 space-y-3 ${bothChecked ? 'bg-red-50 border-2 border-red-500' : 'border border-gray-200'}`}>
+    <div className={`rounded-lg p-4 space-y-3 ${getBorderStyle()}`}>
       <div className="text-sm font-medium text-gray-900">{label}</div>
       <div className="flex items-center gap-6">
         <label className="flex items-center gap-2 min-h-[44px]">
@@ -33,9 +40,9 @@ function CategoryItem({ keyName, label, engaged, active, note }: CategoryItemPro
             type="checkbox"
             defaultChecked={engaged}
             onChange={(e) => setIsEngaged(e.target.checked)}
-            className="focus:ring-indigo-500 h-5 w-5 text-indigo-600 border-gray-300 rounded"
+            className="focus:ring-amber-500 h-5 w-5 text-amber-500 border-gray-300 rounded"
           />
-          <span className="text-sm text-gray-600">Engaged</span>
+          <span className="text-sm text-amber-700">Engaged</span>
         </label>
         <label className="flex items-center gap-2 min-h-[44px]">
           <input
@@ -44,9 +51,9 @@ function CategoryItem({ keyName, label, engaged, active, note }: CategoryItemPro
             type="checkbox"
             defaultChecked={active}
             onChange={(e) => setIsActive(e.target.checked)}
-            className="focus:ring-red-500 h-5 w-5 text-red-600 border-gray-300 rounded"
+            className="focus:ring-emerald-500 h-5 w-5 text-emerald-600 border-gray-300 rounded"
           />
-          <span className="text-sm text-red-600 font-medium">Ours</span>
+          <span className="text-sm text-emerald-600 font-medium">Ours</span>
         </label>
       </div>
       <input

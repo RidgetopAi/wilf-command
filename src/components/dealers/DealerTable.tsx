@@ -85,12 +85,12 @@ export function DealerTable({ dealers }: DealerTableProps) {
                 {(segments.length > 0 || stocking.length > 0) && (
                   <div className="mt-3 flex flex-wrap gap-1">
                     {segments.map(s => (
-                      <span key={s} className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
+                      <span key={s} className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
                         {s}
                       </span>
                     ))}
                     {stocking.map(s => (
-                      <span key={s} className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
+                      <span key={s} className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
                         {s}
                       </span>
                     ))}
@@ -114,10 +114,10 @@ export function DealerTable({ dealers }: DealerTableProps) {
                 Program
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <span className="text-red-600">Active Segments</span>
+                <span className="text-emerald-600">Ours (Segments)</span>
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <span className="text-red-600">Active Stocking</span>
+                <span className="text-emerald-600">Ours (Stocking)</span>
               </th>
               <th scope="col" className="relative px-4 py-3">
                 <span className="sr-only">View</span>
@@ -147,7 +147,7 @@ export function DealerTable({ dealers }: DealerTableProps) {
                     {segments.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {segments.map(s => (
-                          <span key={s} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                          <span key={s} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
                             {s}
                           </span>
                         ))}
@@ -160,7 +160,7 @@ export function DealerTable({ dealers }: DealerTableProps) {
                     {stocking.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {stocking.map(s => (
-                          <span key={s} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                          <span key={s} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
                             {s}
                           </span>
                         ))}
