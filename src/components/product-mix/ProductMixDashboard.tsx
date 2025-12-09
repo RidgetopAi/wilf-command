@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { ProductMixMonthly, ProductMixTarget } from '@/types'
-import { getProductMix, getTargets } from '@/lib/api/productMix'
+import { useState } from 'react'
+import { useProductMix, useProductMixTargets } from '@/lib/hooks'
 import { ProductMixGrid } from './ProductMixGrid'
 import { ProductMixChart } from './ProductMixChart'
 
@@ -13,30 +12,38 @@ interface ProductMixDashboardProps {
 
 export function ProductMixDashboard({ repId, accountNumber }: ProductMixDashboardProps) {
   const [year, setYear] = useState(new Date().getFullYear())
-  const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<ProductMixMonthly[]>([])
-  const [target, setTarget] = useState<ProductMixTarget | null>(null)
 
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true)
-      try {
-        const [mixData, targetData] = await Promise.all([
-          getProductMix(repId, accountNumber, year),
-          getTargets(repId, year)
-        ])
-        setData(mixData)
-        setTarget(targetData)
-      } catch (err) {
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchData()
-  }, [repId, accountNumber, year])
+  const { 
+    data: mixData = [], 
+    isLoading: isMixLoading,
+    error: mixError 
+  } = useProductMix(repId, accountNumber, year)
 
-  if (loading) return <div>Loading analytics...</div>
+  const { 
+    data: target,
+    isLoading: isTargetLoading 
+  } = useProductMixTargets(repId, year)
+
+  const isLoading = isMixLoading || isTargetLoading
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="h-8 bg-gray-200 rounded w-32 ml-auto" />
+        <div className="h-64 bg-gray-200 rounded" />
+        <div className="h-80 bg-gray-200 rounded" />
+      </div>
+    )
+  }
+
+  if (mixError) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-600">Couldn't load product mix data.</p>
+        <p className="text-sm text-gray-500 mt-2">Check your connection and try again.</p>
+      </div>
+    )
+  }
 
   const defaultTargets = {
     adura_target: target?.adura_target || 0,
@@ -46,9 +53,8 @@ export function ProductMixDashboard({ repId, accountNumber }: ProductMixDashboar
     sheet_target: target?.sheet_target || 0,
   }
 
-  // Transform monthly data array to object map for Grid
-  const monthlyDataMap: Record<number, any> = {}
-  data.forEach(row => {
+  const monthlyDataMap: Record<number, typeof mixData[0]> = {}
+  mixData.forEach(row => {
     monthlyDataMap[row.month] = row
   })
 
@@ -75,7 +81,7 @@ export function ProductMixDashboard({ repId, accountNumber }: ProductMixDashboar
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Monthly Mix Trend</h3>
         <div className="h-80 w-full">
-          <ProductMixChart data={data} />
+          <ProductMixChart data={mixData} />
         </div>
       </div>
     </div>

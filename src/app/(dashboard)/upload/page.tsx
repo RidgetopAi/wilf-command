@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { CSVUploader } from '@/components/upload/CSVUploader'
 import { parseAndUploadAccountMapping } from '@/lib/parsers/accountMapping'
 import {
@@ -10,8 +11,10 @@ import {
   type SalesPreview
 } from '@/lib/parsers/monthlySales'
 import { getRepId } from './actions'
+import { territoryKeys, productMixKeys, dealerKeys } from '@/lib/hooks'
 
 export default function UploadPage() {
+  const queryClient = useQueryClient()
   const [isProcessing, setIsProcessing] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string, details?: string[] } | null>(null)
   const [repId, setRepId] = useState<string | null>(null)
@@ -58,6 +61,9 @@ export default function UploadPage() {
           message: `Successfully imported ${result.success} dealers.` 
         })
       }
+      
+      queryClient.invalidateQueries({ queryKey: dealerKeys.all })
+      queryClient.invalidateQueries({ queryKey: territoryKeys.all })
     } catch (error) {
       setStatus({ type: 'error', message: 'Failed to parse CSV file.' })
     } finally {
@@ -124,6 +130,9 @@ export default function UploadPage() {
           message: `Successfully updated product mix for ${result.success} accounts.`
         })
       }
+      
+      queryClient.invalidateQueries({ queryKey: territoryKeys.all })
+      queryClient.invalidateQueries({ queryKey: productMixKeys.all })
     } catch (error) {
       setStatus({
         type: 'error',

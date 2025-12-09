@@ -1,8 +1,8 @@
 'use client'
 
 import { Dealer } from '@/types'
-import { updateDealer } from '@/app/(dashboard)/dealers/[id]/actions'
-import { useState } from 'react'
+import { useUpdateDealer } from '@/lib/hooks'
+import { useState, useRef } from 'react'
 
 interface DealerFormProps {
   dealer: Dealer
@@ -23,30 +23,30 @@ function CategoryItem({ keyName, label, engaged, active, note }: CategoryItemPro
   const bothChecked = isEngaged && isActive
 
   return (
-    <div className={`rounded-lg p-3 space-y-2 ${bothChecked ? 'bg-red-50 border-2 border-red-500' : 'border border-gray-200'}`}>
+    <div className={`rounded-lg p-4 space-y-3 ${bothChecked ? 'bg-red-50 border-2 border-red-500' : 'border border-gray-200'}`}>
       <div className="text-sm font-medium text-gray-900">{label}</div>
-      <div className="flex items-center gap-4">
-        <label className="flex items-center gap-1.5">
+      <div className="flex items-center gap-6">
+        <label className="flex items-center gap-2 min-h-[44px]">
           <input
             id={keyName}
             name={keyName}
             type="checkbox"
             defaultChecked={engaged}
             onChange={(e) => setIsEngaged(e.target.checked)}
-            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+            className="focus:ring-indigo-500 h-5 w-5 text-indigo-600 border-gray-300 rounded"
           />
-          <span className="text-xs text-gray-600">Engaged</span>
+          <span className="text-sm text-gray-600">Engaged</span>
         </label>
-        <label className="flex items-center gap-1.5">
+        <label className="flex items-center gap-2 min-h-[44px]">
           <input
             id={`${keyName}_active`}
             name={`${keyName}_active`}
             type="checkbox"
             defaultChecked={active}
             onChange={(e) => setIsActive(e.target.checked)}
-            className="focus:ring-red-500 h-4 w-4 text-red-600 border-gray-300 rounded"
+            className="focus:ring-red-500 h-5 w-5 text-red-600 border-gray-300 rounded"
           />
-          <span className="text-xs text-red-600 font-medium">Ours</span>
+          <span className="text-sm text-red-600 font-medium">Ours</span>
         </label>
       </div>
       <input
@@ -54,25 +54,28 @@ function CategoryItem({ keyName, label, engaged, active, note }: CategoryItemPro
         name={`${keyName}_note`}
         defaultValue={note || ''}
         placeholder="Note..."
-        className="block w-full text-xs border border-gray-200 rounded py-1 px-2 focus:ring-indigo-500 focus:border-indigo-500"
+        className="block w-full text-sm border border-gray-200 rounded py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500"
       />
     </div>
   )
 }
 
 export function DealerForm({ dealer }: DealerFormProps) {
-  const [isSaving, setIsSaving] = useState(false)
-  // v3 form
+  const formRef = useRef<HTMLFormElement>(null)
+  const updateDealer = useUpdateDealer()
 
-  const handleSubmit = async (formData: FormData) => {
-    setIsSaving(true)
-    try {
-      await updateDealer(dealer.id, formData)
-    } catch (error) {
-      alert('Failed to save changes')
-    } finally {
-      setIsSaving(false)
-    }
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    
+    updateDealer.mutate(
+      { id: dealer.id, formData },
+      {
+        onError: () => {
+          alert('Failed to save changes')
+        },
+      }
+    )
   }
 
   const marketSegments: [string, string][] = [
@@ -96,7 +99,7 @@ export function DealerForm({ dealer }: DealerFormProps) {
   ]
 
   return (
-    <form action={handleSubmit} className="space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700"># Loc</label>
@@ -185,10 +188,10 @@ export function DealerForm({ dealer }: DealerFormProps) {
         <div className="flex justify-end">
           <button
             type="submit"
-            disabled={isSaving}
-            className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            disabled={updateDealer.isPending}
+            className="ml-3 inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 min-h-[44px]"
           >
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {updateDealer.isPending ? 'Saving...' : updateDealer.isSuccess ? 'Saved!' : 'Save Changes'}
           </button>
         </div>
       </div>

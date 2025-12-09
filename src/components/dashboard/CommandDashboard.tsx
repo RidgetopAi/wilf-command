@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { getTerritoryOverview, getTerritoryMonthlyMix, TerritoryOverview } from '@/lib/api/productMix'
-import { ProductMixMonthly } from '@/types'
+import { useState } from 'react'
+import { useTerritoryOverview, useTerritoryMonthlyMix } from '@/lib/hooks'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 
 interface CommandDashboardProps {
@@ -33,30 +32,21 @@ function formatNumber(value: number): string {
 
 export function CommandDashboard({ repId }: CommandDashboardProps) {
   const [year, setYear] = useState(new Date().getFullYear())
-  const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<TerritoryOverview | null>(null)
-  const [monthlyMix, setMonthlyMix] = useState<ProductMixMonthly[]>([])
+  
+  const { 
+    data: overview, 
+    isLoading: isOverviewLoading, 
+    error: overviewError 
+  } = useTerritoryOverview(repId, year)
+  
+  const { 
+    data: monthlyMix = [], 
+    isLoading: isMixLoading 
+  } = useTerritoryMonthlyMix(repId, year)
 
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true)
-      try {
-        const [overview, mixData] = await Promise.all([
-          getTerritoryOverview(repId, year),
-          getTerritoryMonthlyMix(repId, year)
-        ])
-        setData(overview)
-        setMonthlyMix(mixData)
-      } catch (err) {
-        console.error('Failed to load territory overview:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchData()
-  }, [repId, year])
+  const isLoading = isOverviewLoading || isMixLoading
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-gray-500">Loading Command Center...</div>
@@ -64,7 +54,16 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
     )
   }
 
-  if (!data) {
+  if (overviewError) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600">We couldn't load your territory overview.</p>
+        <p className="text-sm text-gray-500 mt-2">Check your connection and try again.</p>
+      </div>
+    )
+  }
+
+  if (!overview) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">No data available. Upload your dealer list and monthly sales to get started.</p>
@@ -72,11 +71,10 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
     )
   }
 
-  // Prepare chart data
-  const categoryData = Object.entries(data.categorySales).map(([key, value]) => ({
+  const categoryData = Object.entries(overview.categorySales).map(([key, value]) => ({
     name: CATEGORY_LABELS[key] || key,
     sales: value,
-    orders: data.categoryOrders[key as keyof typeof data.categoryOrders] || 0
+    orders: overview.categoryOrders[key as keyof typeof overview.categoryOrders] || 0
   }))
 
   const pieData = categoryData.map((item, index) => ({
@@ -84,6 +82,32 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
     value: item.sales,
     color: COLORS[index % COLORS.length]
   }))
+
+  const monthlyChartData = (() => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    return months.map((monthName, idx) => {
+      const monthNum = idx + 1
+      const found = monthlyMix.find(d => d.month === monthNum)
+      if (found) {
+        return {
+          name: monthName,
+          Adura: found.adura_pct,
+          'Wood & Lam': found.wood_laminate_pct,
+          Sundries: found.sundries_pct,
+          'NS & Resp': found.ns_resp_pct,
+          Sheet: found.sheet_pct
+        }
+      }
+      return {
+        name: monthName,
+        Adura: 0,
+        'Wood & Lam': 0,
+        Sundries: 0,
+        'NS & Resp': 0,
+        Sheet: 0
+      }
+    })
+  })()
 
   return (
     <div className="space-y-6">
@@ -108,23 +132,23 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm font-medium text-gray-500">Total Sales YTD</p>
-          <p className="text-2xl font-bold text-gray-900">{formatCurrency(data.totalSales)}</p>
+          <p className="text-2xl font-bold text-gray-900">{formatCurrency(overview.totalSales)}</p>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm font-medium text-gray-500">Total Orders</p>
-          <p className="text-2xl font-bold text-gray-900">{formatNumber(data.totalOrders)}</p>
+          <p className="text-2xl font-bold text-gray-900">{formatNumber(overview.totalOrders)}</p>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm font-medium text-gray-500">Dealers</p>
-          <p className="text-2xl font-bold text-gray-900">{data.dealerCount}</p>
+          <p className="text-2xl font-bold text-gray-900">{overview.dealerCount}</p>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm font-medium text-gray-500">Active Positions</p>
-          <p className="text-2xl font-bold text-gray-900">{data.totalActivePositions}/{data.totalPossiblePositions}</p>
+          <p className="text-2xl font-bold text-gray-900">{overview.totalActivePositions}/{overview.totalPossiblePositions}</p>
         </div>
         <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
           <p className="text-sm font-medium text-gray-500">Penetration</p>
-          <p className="text-2xl font-bold text-red-600">{data.overallPenetrationPct}%</p>
+          <p className="text-2xl font-bold text-red-600">{overview.overallPenetrationPct}%</p>
         </div>
       </div>
 
@@ -180,31 +204,7 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={(() => {
-                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-                return months.map((monthName, idx) => {
-                  const monthNum = idx + 1
-                  const found = monthlyMix.find(d => d.month === monthNum)
-                  if (found) {
-                    return {
-                      name: monthName,
-                      Adura: found.adura_pct,
-                      'Wood & Lam': found.wood_laminate_pct,
-                      Sundries: found.sundries_pct,
-                      'NS & Resp': found.ns_resp_pct,
-                      Sheet: found.sheet_pct
-                    }
-                  }
-                  return {
-                    name: monthName,
-                    Adura: 0,
-                    'Wood & Lam': 0,
-                    Sundries: 0,
-                    'NS & Resp': 0,
-                    Sheet: 0
-                  }
-                })
-              })()}
+              data={monthlyChartData}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
@@ -252,7 +252,7 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
                   {formatNumber(cat.orders)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
-                  {data.totalSales > 0 ? ((cat.sales / data.totalSales) * 100).toFixed(1) : 0}%
+                  {overview.totalSales > 0 ? ((cat.sales / overview.totalSales) * 100).toFixed(1) : 0}%
                 </td>
               </tr>
             ))}
@@ -278,7 +278,7 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {data.segmentPenetration.map((seg) => (
+              {overview.segmentPenetration.map((seg) => (
                 <tr key={seg.label}>
                   <td className="px-4 py-3 text-sm text-gray-900">{seg.label}</td>
                   <td className="px-4 py-3 text-sm text-gray-500 text-center">{seg.engaged}</td>
@@ -314,7 +314,7 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {data.stockingPenetration.map((cat) => (
+              {overview.stockingPenetration.map((cat) => (
                 <tr key={cat.label}>
                   <td className="px-4 py-3 text-sm text-gray-900">{cat.label}</td>
                   <td className="px-4 py-3 text-sm text-gray-500 text-center">{cat.engaged}</td>
@@ -350,7 +350,7 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {data.topDealers.map((dealer, index) => (
+            {overview.topDealers.map((dealer, index) => (
               <tr key={dealer.account_number} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {index + 1}
@@ -367,7 +367,7 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
                 </td>
               </tr>
             ))}
-            {data.topDealers.length === 0 && (
+            {overview.topDealers.length === 0 && (
               <tr>
                 <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
                   No dealer data available yet
@@ -379,7 +379,7 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
       </div>
 
       {/* Opportunities */}
-      {data.opportunities.length > 0 && (
+      {overview.opportunities.length > 0 && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Top Opportunities</h3>
@@ -394,7 +394,7 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {data.opportunities.map((opp) => (
+              {overview.opportunities.map((opp) => (
                 <tr key={opp.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <a href={`/dealers/${opp.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-900">
