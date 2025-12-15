@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useProductMix, useProductMixTargets } from '@/lib/hooks'
 import { ProductMixGrid } from './ProductMixGrid'
 import { ProductMixChart } from './ProductMixChart'
+import { MonthlySalesChart } from './MonthlySalesChart'
 
 interface ProductMixDashboardProps {
   repId: string
@@ -82,6 +83,13 @@ export function ProductMixDashboard({ repId, accountNumber }: ProductMixDashboar
         <h3 className="text-lg font-medium text-gray-900 mb-4">Monthly Mix Trend</h3>
         <div className="h-80 w-full">
           <ProductMixChart data={mixData} />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Monthly Sales</h3>
+        <div className="h-80 w-full">
+          <MonthlySalesChart data={mixData} />
         </div>
       </div>
     </div>
