@@ -32,7 +32,7 @@ function CategoryItem({ keyName, label, engaged, active, note }: CategoryItemPro
   return (
     <div className={`rounded-lg p-4 space-y-3 ${getBorderStyle()}`}>
       <div className="text-sm font-medium text-gray-900">{label}</div>
-      <div className="flex items-center gap-6">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <label className="flex items-center gap-2 min-h-[44px]">
           <input
             id={keyName}
@@ -144,7 +144,7 @@ export function DealerForm({ dealer }: DealerFormProps) {
             <legend className="text-base font-medium text-gray-900 mb-2">
               Market Segments
             </legend>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               {marketSegments.map(([key, label]) => (
                 <CategoryItem
                   key={key}
@@ -165,7 +165,7 @@ export function DealerForm({ dealer }: DealerFormProps) {
             <legend className="text-base font-medium text-gray-900 mb-2">
               Stocking Profile
             </legend>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               {stockingCategories.map(([key, label]) => (
                 <CategoryItem
                   key={key}
