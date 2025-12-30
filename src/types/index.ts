@@ -144,3 +144,12 @@ export interface DealerDisplay {
   created_at: string
   display?: Display // Joined display info
 }
+
+export type DisplayTimeframe = 'month' | 'ytd' | 'rolling3'
+
+export interface InactiveAduraDealer {
+  id: string
+  dealer_name: string
+  account_number: string
+  display_count: number // Number of adura displays assigned
+}

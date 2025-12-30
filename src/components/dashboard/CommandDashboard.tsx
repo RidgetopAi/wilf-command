@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useTerritoryOverview, useTerritoryMonthlyMix } from '@/lib/hooks'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 import { KpiPill, MobileCollapsible } from '@/components/ui'
+import { InactiveAduraDisplays } from './InactiveAduraDisplays'
 
 interface CommandDashboardProps {
   repId: string
@@ -163,6 +164,9 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
           <p className="text-2xl font-bold text-emerald-600">{overview.overallPenetrationPct}%</p>
         </div>
       </div>
+
+      {/* Inactive Adura Displays Alert */}
+      <InactiveAduraDisplays repId={repId} year={year} />
 
       {/* Mobile: Flex column with order classes | Desktop: Grid layout */}
       <div className="flex flex-col gap-6 sm:contents">
