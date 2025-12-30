@@ -5,13 +5,16 @@ import { useProductMix, useProductMixTargets } from '@/lib/hooks'
 import { ProductMixGrid } from './ProductMixGrid'
 import { ProductMixChart } from './ProductMixChart'
 import { MonthlySalesChart } from './MonthlySalesChart'
+import { DisplaySalesChart } from './DisplaySalesChart'
+import { Display } from '@/types'
 
 interface ProductMixDashboardProps {
   repId: string
   accountNumber: string
+  displays?: Display[]
 }
 
-export function ProductMixDashboard({ repId, accountNumber }: ProductMixDashboardProps) {
+export function ProductMixDashboard({ repId, accountNumber, displays = [] }: ProductMixDashboardProps) {
   const [year, setYear] = useState(new Date().getFullYear())
 
   const { 
@@ -92,6 +95,13 @@ export function ProductMixDashboard({ repId, accountNumber }: ProductMixDashboar
           <MonthlySalesChart data={mixData} />
         </div>
       </div>
+
+      {displays.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Display Productivity</h3>
+          <DisplaySalesChart displays={displays} monthlyData={mixData} />
+        </div>
+      )}
     </div>
   )
 }

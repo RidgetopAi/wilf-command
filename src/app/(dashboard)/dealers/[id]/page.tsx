@@ -1,4 +1,5 @@
 import { getDealerById } from '@/lib/api/dealers'
+import { getDisplays, getDealerDisplays } from '@/lib/api/displays'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ProductMixDashboard } from '@/components/product-mix/ProductMixDashboard'
@@ -8,11 +9,19 @@ export const dynamic = 'force-dynamic'
 
 export default async function DealerDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
-  const dealer = await getDealerById(params.id)
+  const [dealer, allDisplays, dealerDisplays] = await Promise.all([
+    getDealerById(params.id),
+    getDisplays(),
+    getDealerDisplays(params.id)
+  ])
 
   if (!dealer) {
     notFound()
   }
+
+  // Get full display objects for this dealer
+  const dealerDisplayCodes = new Set(dealerDisplays.map(dd => dd.display_code))
+  const displays = allDisplays.filter(d => dealerDisplayCodes.has(d.code))
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -55,6 +64,7 @@ export default async function DealerDetailPage(props: { params: Promise<{ id: st
         <ProductMixDashboard
           repId={dealer.rep_id}
           accountNumber={dealer.account_number}
+          displays={displays}
         />
       </div>
     </div>
