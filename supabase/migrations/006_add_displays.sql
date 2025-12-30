@@ -69,12 +69,15 @@ INSERT INTO displays (code, name, category) VALUES
   -- Adura displays
   ('A0', 'ADURA CRAFTED EDGE STAIR STEP', 'adura'),
   ('A1', 'ADURA TILE TOWER', 'adura'),
+  ('A8', 'ADURA SLCT SELLING SYS 60"', 'adura'),
   ('A9', 'ADURA DELUX SOLUTION CNTR 90"', 'adura'),
   ('M4', 'ADURA MAX APEX 2 TIER DISP', 'adura'),
   ('M5', 'ADURA MAX APEX 3 TIER DISP', 'adura'),
   ('M6', 'ADURA MAX VALUE SOL CENTER', 'adura'),
   ('M7', 'APEX 3 TIER CONV (REALTA)', 'adura'),
   ('M8', 'APEX PREMIUM', 'adura'),
+  ('RA', 'REALTA SPC DISPLAY', 'adura'),
+  ('RB', 'REALTA SIMPLE STAIR', 'adura'),
 
   -- Laminate displays
   ('LA', 'MANN LAM 30" RESTN UF 2018', 'laminate'),
@@ -94,6 +97,7 @@ INSERT INTO displays (code, name, category) VALUES
   ('W3', 'WOOD 60" UF', 'wood'),
   ('W4', 'WOOD 90" UF', 'wood'),
   ('W5', 'WOOD WATERFALL D', 'wood'),
+  ('W7', 'WOOD PREMIUM DSP', 'wood'),
   ('W9', 'CARPET ONE INVINCIBLE PREM', 'wood'),
 
   -- Somerset displays
@@ -128,4 +132,5 @@ INSERT INTO displays (code, name, category) VALUES
   ('R3', 'RESPONSIVE TRIPLE TOWER', 'ns_resp'),
 
   -- Sheet (LVS) displays
+  ('R8', 'MANN REVIVE SS DISPLAY', 'sheet'),
   ('V0', 'LVS UF DSP', 'sheet');
