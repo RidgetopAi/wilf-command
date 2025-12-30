@@ -134,7 +134,9 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
         <KpiPill label="Penetration" value={`${overview.overallPenetrationPct}%`} tone="success" />
         <KpiPill label="Active" value={`${overview.totalActivePositions}/${overview.totalPossiblePositions}`} tone="neutral" />
         <KpiPill label="Sales YTD" value={formatCurrency(overview.totalSales)} tone="primary" />
-        <KpiPill label="Opportunities" value={overview.opportunities.length} tone="warning" />
+        <a href="/opportunities">
+          <KpiPill label="Opportunities" value={overview.opportunities.length} tone="warning" />
+        </a>
         <KpiPill label="Dealers" value={overview.dealerCount} tone="neutral" />
       </div>
 
@@ -193,163 +195,8 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
           </div>
         </div>
 
-        {/* Opportunities - order-2 mobile (actionable) */}
-        {overview.opportunities.length > 0 && (
-          <div className="order-2 sm:order-none bg-white rounded-lg shadow overflow-hidden">
-            <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Top Opportunities</h3>
-              <p className="text-sm text-gray-500">Dealers engaged but not yet active with us</p>
-            </div>
-            {/* Mobile: Card list */}
-            <div className="divide-y divide-gray-200 sm:hidden">
-              {overview.opportunities.slice(0, 5).map((opp) => (
-                <a key={opp.id} href={`/dealers/${opp.id}`} className="block px-4 py-3 hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-indigo-600">{opp.dealer_name}</p>
-                      <p className="text-xs text-gray-500">{opp.account_number}</p>
-                    </div>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                      {opp.categories.length} gaps
-                    </span>
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap gap-1">
-                    {opp.categories.slice(0, 3).map((cat) => (
-                      <span key={cat} className="text-xs text-gray-500">{cat}</span>
-                    ))}
-                    {opp.categories.length > 3 && <span className="text-xs text-gray-400">+{opp.categories.length - 3}</span>}
-                  </div>
-                </a>
-              ))}
-              {overview.opportunities.length > 5 && (
-                <a href="/dealers" className="block px-4 py-3 text-center text-sm text-indigo-600 font-medium">
-                  View all {overview.opportunities.length} opportunities →
-                </a>
-              )}
-            </div>
-            {/* Desktop: Table */}
-            <table className="hidden sm:table min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dealer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Opportunity Categories</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase"># Gaps</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {overview.opportunities.map((opp) => (
-                  <tr key={opp.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <a href={`/dealers/${opp.id}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-900">
-                        {opp.dealer_name}
-                      </a>
-                      <div className="text-xs text-gray-500">{opp.account_number}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-1">
-                        {opp.categories.slice(0, 5).map((cat) => (
-                          <span key={cat} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-                            {cat}
-                          </span>
-                        ))}
-                        {opp.categories.length > 5 && (
-                          <span className="text-xs text-gray-500">+{opp.categories.length - 5} more</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                        {opp.categories.length}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Penetration Analytics - order-3 mobile */}
-        <div className="order-3 sm:order-none grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Market Segment Penetration */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Market Segment Penetration</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Segment</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-amber-600 uppercase">Engaged</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-emerald-600 uppercase">Ours</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-rose-500 uppercase">Gap</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">%</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {overview.segmentPenetration.map((seg) => (
-                    <tr key={seg.label}>
-                      <td className="px-4 py-3 text-sm text-gray-900">{seg.label}</td>
-                      <td className="px-4 py-3 text-sm text-amber-600 text-center">{seg.engaged}</td>
-                      <td className="px-4 py-3 text-sm text-emerald-600 text-center font-medium">{seg.active}</td>
-                      <td className="px-4 py-3 text-sm text-rose-500 text-center">{seg.gap}</td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end">
-                          <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                            <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${seg.penetrationPct}%` }} />
-                          </div>
-                          <span className="text-sm text-gray-900">{seg.penetrationPct}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Stocking Penetration */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Stocking Penetration</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-amber-600 uppercase">Stocks</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-emerald-600 uppercase">Ours</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-rose-500 uppercase">Gap</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">%</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {overview.stockingPenetration.map((cat) => (
-                    <tr key={cat.label}>
-                      <td className="px-4 py-3 text-sm text-gray-900">{cat.label}</td>
-                      <td className="px-4 py-3 text-sm text-amber-600 text-center">{cat.engaged}</td>
-                      <td className="px-4 py-3 text-sm text-emerald-600 text-center font-medium">{cat.active}</td>
-                      <td className="px-4 py-3 text-sm text-rose-500 text-center">{cat.gap}</td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end">
-                          <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                            <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${cat.penetrationPct}%` }} />
-                          </div>
-                          <span className="text-sm text-gray-900">{cat.penetrationPct}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Sales by Category Bar Chart - order-4 mobile */}
-        <div className="order-4 sm:order-none bg-white rounded-lg shadow p-6">
+        {/* Sales by Category Bar Chart - order-2 mobile */}
+        <div className="order-2 sm:order-none bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Sales by Category</h3>
           <div className="h-48 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -390,7 +237,7 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
         </MobileCollapsible>
 
         {/* Desktop: Monthly Mix Trend */}
-        <div className="order-5 hidden sm:block bg-white rounded-lg shadow p-6">
+        <div className="order-3 hidden sm:block bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Monthly Mix Trend (All Dealers)</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -449,7 +296,7 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
         </MobileCollapsible>
 
         {/* Desktop: Category Breakdown Table */}
-        <div className="order-6 hidden sm:block bg-white rounded-lg shadow overflow-hidden">
+        <div className="order-4 hidden sm:block bg-white rounded-lg shadow overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Category Breakdown</h3>
           </div>
@@ -510,7 +357,7 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
         </MobileCollapsible>
 
         {/* Desktop: Top Dealers */}
-        <div className="order-7 hidden sm:block bg-white rounded-lg shadow overflow-hidden">
+        <div className="order-5 hidden sm:block bg-white rounded-lg shadow overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">Top 10 Dealers</h3>
           </div>
