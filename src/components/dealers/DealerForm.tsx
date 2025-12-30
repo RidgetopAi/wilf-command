@@ -247,6 +247,22 @@ export function DealerForm({ dealer, displays = [], selectedDisplayCodes = [] }:
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+      {/* Sticky Save Button at Top */}
+      <div className="sticky top-0 z-10 bg-white pb-4 -mt-2 pt-2 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-500">
+            {isSaving ? 'Saving changes...' : isSaved ? 'All changes saved' : 'Unsaved changes'}
+          </span>
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+          >
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700"># Loc</label>
@@ -352,17 +368,6 @@ export function DealerForm({ dealer, displays = [], selectedDisplayCodes = [] }:
         </div>
       </div>
 
-      <div className="pt-5">
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="ml-3 inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 min-h-[44px]"
-          >
-            {isSaving ? 'Saving...' : isSaved ? 'Saved!' : 'Save Changes'}
-          </button>
-        </div>
-      </div>
     </form>
   )
 }
