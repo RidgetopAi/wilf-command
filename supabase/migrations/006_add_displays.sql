@@ -92,7 +92,7 @@ INSERT INTO displays (code, name, category) VALUES
   ('WE', 'WOOD DISTRESSED TOWER', 'wood'),
   ('WF', 'WOOD MAISON TOWER', 'wood'),
   ('WS', 'WOOD SANCTUARY SS DSP', 'wood'),
-  ('W0', 'RESPONSIVE ELITE CONVERSION', 'wood'),
+  ('W0', 'RESPONSIVE ELITE CONVERSION', 'ns_resp'),
   ('W2', 'RESPONSIVE TWO TOWERS', 'wood'),
   ('W3', 'WOOD 60" UF', 'wood'),
   ('W4', 'WOOD 90" UF', 'wood'),
