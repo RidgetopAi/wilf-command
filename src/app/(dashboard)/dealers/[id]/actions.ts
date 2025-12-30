@@ -4,6 +4,41 @@ import { createClient } from '@/lib/supabase/server'
 import { Dealer } from '@/types'
 import { revalidatePath } from 'next/cache'
 
+export async function updateDealerDisplays(dealerId: string, displayCodes: string[]) {
+  const supabase = await createClient()
+
+  // Delete existing dealer displays
+  const { error: deleteError } = await supabase
+    .from('dealer_displays')
+    .delete()
+    .eq('dealer_id', dealerId)
+
+  if (deleteError) {
+    console.error('Failed to delete existing displays:', deleteError)
+    throw new Error('Failed to update displays')
+  }
+
+  // Insert new displays if any selected
+  if (displayCodes.length > 0) {
+    const records = displayCodes.map(code => ({
+      dealer_id: dealerId,
+      display_code: code
+    }))
+
+    const { error: insertError } = await supabase
+      .from('dealer_displays')
+      .insert(records)
+
+    if (insertError) {
+      console.error('Failed to insert displays:', insertError)
+      throw new Error('Failed to update displays')
+    }
+  }
+
+  revalidatePath(`/dealers/${dealerId}`)
+  revalidatePath(`/dealers/${dealerId}/attributes`)
+}
+
 export async function updateDealer(id: string, formData: FormData) {
   const supabase = await createClient()
   

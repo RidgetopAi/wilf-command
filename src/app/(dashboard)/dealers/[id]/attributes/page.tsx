@@ -1,4 +1,5 @@
 import { getDealerById } from '@/lib/api/dealers'
+import { getDisplays, getDealerDisplays } from '@/lib/api/displays'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { DealerForm } from '@/components/dealers/DealerForm'
@@ -8,11 +9,17 @@ export const dynamic = 'force-dynamic'
 
 export default async function DealerAttributesPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params
-  const dealer = await getDealerById(params.id)
+  const [dealer, displays, dealerDisplays] = await Promise.all([
+    getDealerById(params.id),
+    getDisplays(),
+    getDealerDisplays(params.id)
+  ])
 
   if (!dealer) {
     notFound()
   }
+
+  const selectedDisplayCodes = dealerDisplays.map(dd => dd.display_code)
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -34,7 +41,11 @@ export default async function DealerAttributesPage(props: { params: Promise<{ id
       <div className="max-w-2xl">
         <div className="bg-white shadow rounded-lg p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Dealer Attributes</h2>
-          <DealerForm dealer={dealer} />
+          <DealerForm
+            dealer={dealer}
+            displays={displays}
+            selectedDisplayCodes={selectedDisplayCodes}
+          />
         </div>
       </div>
     </div>

@@ -126,3 +126,21 @@ export interface ProductMixTarget {
   created_at: string
   updated_at: string
 }
+
+export type DisplayCategory = 'adura' | 'laminate' | 'wood' | 'somerset' | 'bjelin' | 'lauzon' | 'ns_resp' | 'sheet'
+
+export interface Display {
+  code: string
+  name: string
+  category: DisplayCategory
+}
+
+export interface DealerDisplay {
+  id: string
+  dealer_id: string
+  display_code: string
+  installed_date: string | null
+  notes: string | null
+  created_at: string
+  display?: Display // Joined display info
+}

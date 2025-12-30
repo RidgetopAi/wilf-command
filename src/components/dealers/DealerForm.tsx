@@ -1,11 +1,14 @@
 'use client'
 
-import { Dealer } from '@/types'
-import { useUpdateDealer } from '@/lib/hooks'
+import { Dealer, Display, DisplayCategory } from '@/types'
+import { useUpdateDealer, useUpdateDealerDisplays } from '@/lib/hooks'
 import { useState, useRef } from 'react'
+import { ChevronDown, ChevronUp, Check } from 'lucide-react'
 
 interface DealerFormProps {
   dealer: Dealer
+  displays?: Display[]
+  selectedDisplayCodes?: string[]
 }
 
 interface CategoryItemProps {
@@ -67,14 +70,136 @@ function CategoryItem({ keyName, label, engaged, active, note }: CategoryItemPro
   )
 }
 
-export function DealerForm({ dealer }: DealerFormProps) {
+const CATEGORY_LABELS: Record<DisplayCategory, string> = {
+  adura: 'Adura',
+  laminate: 'Laminate',
+  wood: 'Wood',
+  somerset: 'Somerset',
+  bjelin: 'Bjelin',
+  lauzon: 'Lauzon',
+  ns_resp: 'NS & Resp',
+  sheet: 'Sheet (LVS)'
+}
+
+const CATEGORY_ORDER: DisplayCategory[] = ['adura', 'wood', 'laminate', 'ns_resp', 'somerset', 'lauzon', 'bjelin', 'sheet']
+
+function DisplaySelector({
+  displays,
+  selectedCodes,
+  onSelectionChange
+}: {
+  displays: Display[]
+  selectedCodes: string[]
+  onSelectionChange: (codes: string[]) => void
+}) {
+  const [expandedCategories, setExpandedCategories] = useState<Set<DisplayCategory>>(new Set())
+
+  const displaysByCategory = displays.reduce((acc, display) => {
+    if (!acc[display.category]) acc[display.category] = []
+    acc[display.category].push(display)
+    return acc
+  }, {} as Record<DisplayCategory, Display[]>)
+
+  const toggleCategory = (category: DisplayCategory) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev)
+      if (next.has(category)) {
+        next.delete(category)
+      } else {
+        next.add(category)
+      }
+      return next
+    })
+  }
+
+  const toggleDisplay = (code: string) => {
+    if (selectedCodes.includes(code)) {
+      onSelectionChange(selectedCodes.filter(c => c !== code))
+    } else {
+      onSelectionChange([...selectedCodes, code])
+    }
+  }
+
+  const getSelectedCountForCategory = (category: DisplayCategory) => {
+    return displaysByCategory[category]?.filter(d => selectedCodes.includes(d.code)).length || 0
+  }
+
+  return (
+    <div className="space-y-2">
+      {CATEGORY_ORDER.map(category => {
+        const categoryDisplays = displaysByCategory[category]
+        if (!categoryDisplays || categoryDisplays.length === 0) return null
+
+        const isExpanded = expandedCategories.has(category)
+        const selectedCount = getSelectedCountForCategory(category)
+
+        return (
+          <div key={category} className="border border-gray-200 rounded-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() => toggleCategory(category)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 text-left"
+            >
+              <span className="font-medium text-gray-900">
+                {CATEGORY_LABELS[category]}
+                {selectedCount > 0 && (
+                  <span className="ml-2 text-sm text-emerald-600">({selectedCount} selected)</span>
+                )}
+              </span>
+              {isExpanded ? (
+                <ChevronUp className="h-4 w-4 text-gray-500" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              )}
+            </button>
+
+            {isExpanded && (
+              <div className="p-3 space-y-1 bg-white">
+                {categoryDisplays.map(display => {
+                  const isSelected = selectedCodes.includes(display.code)
+                  return (
+                    <button
+                      key={display.code}
+                      type="button"
+                      onClick={() => toggleDisplay(display.code)}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded text-left text-sm transition-colors ${
+                        isSelected
+                          ? 'bg-emerald-50 text-emerald-900'
+                          : 'hover:bg-gray-50 text-gray-700'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center ${
+                        isSelected
+                          ? 'bg-emerald-500 border-emerald-500'
+                          : 'border-gray-300'
+                      }`}>
+                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                      <span className="font-mono text-xs text-gray-500 w-6">{display.code}</span>
+                      <span className="flex-1 truncate">{display.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+export function DealerForm({ dealer, displays = [], selectedDisplayCodes = [] }: DealerFormProps) {
   const formRef = useRef<HTMLFormElement>(null)
   const updateDealer = useUpdateDealer()
+  const updateDisplays = useUpdateDealerDisplays()
+  const [selectedDisplays, setSelectedDisplays] = useState<string[]>(selectedDisplayCodes)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    
+
+    // Update dealer attributes
     updateDealer.mutate(
       { id: dealer.id, formData },
       {
@@ -83,7 +208,22 @@ export function DealerForm({ dealer }: DealerFormProps) {
         },
       }
     )
+
+    // Update displays if displays were provided (only on attributes page)
+    if (displays.length > 0) {
+      updateDisplays.mutate(
+        { dealerId: dealer.id, displayCodes: selectedDisplays },
+        {
+          onError: () => {
+            alert('Failed to save displays')
+          },
+        }
+      )
+    }
   }
+
+  const isSaving = updateDealer.isPending || updateDisplays.isPending
+  const isSaved = updateDealer.isSuccess && (displays.length === 0 || updateDisplays.isSuccess)
 
   const marketSegments: [string, string][] = [
     ['retail', 'Retail'],
@@ -137,6 +277,27 @@ export function DealerForm({ dealer }: DealerFormProps) {
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           />
         </div>
+
+        {/* Display Fixtures */}
+        {displays.length > 0 && (
+          <div className="sm:col-span-6 pt-4 border-t border-gray-200">
+            <fieldset>
+              <legend className="text-base font-medium text-gray-900 mb-2">
+                Display Fixtures
+                {selectedDisplays.length > 0 && (
+                  <span className="ml-2 text-sm font-normal text-gray-500">
+                    ({selectedDisplays.length} selected)
+                  </span>
+                )}
+              </legend>
+              <DisplaySelector
+                displays={displays}
+                selectedCodes={selectedDisplays}
+                onSelectionChange={setSelectedDisplays}
+              />
+            </fieldset>
+          </div>
+        )}
 
         {/* Market Segments */}
         <div className="sm:col-span-6">
@@ -195,10 +356,10 @@ export function DealerForm({ dealer }: DealerFormProps) {
         <div className="flex justify-end">
           <button
             type="submit"
-            disabled={updateDealer.isPending}
+            disabled={isSaving}
             className="ml-3 inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 min-h-[44px]"
           >
-            {updateDealer.isPending ? 'Saving...' : updateDealer.isSuccess ? 'Saved!' : 'Save Changes'}
+            {isSaving ? 'Saving...' : isSaved ? 'Saved!' : 'Save Changes'}
           </button>
         </div>
       </div>
