@@ -153,3 +153,129 @@ export interface InactiveAduraDealer {
   account_number: string
   display_count: number // Number of adura displays assigned
 }
+
+// =============================================
+// NOTES SYSTEM TYPES
+// =============================================
+
+export type NoteType = 
+  | 'visit' 
+  | 'follow_up' 
+  | 'vp_opportunity' 
+  | 'issue' 
+  | 'quote' 
+  | 'order' 
+  | 'personal'
+
+export const NOTE_TYPE_LABELS: Record<NoteType, string> = {
+  visit: 'Visit',
+  follow_up: 'Follow-up',
+  vp_opportunity: 'V.P. Opportunity',
+  issue: 'Issue',
+  quote: 'Quote',
+  order: 'Order',
+  personal: 'Personal'
+}
+
+export interface Note {
+  id: string
+  dealer_id: string
+  type: NoteType
+  title: string | null
+  body: string
+  visit_date: string
+  follow_up_date: string | null
+  auto_send_email: boolean
+  dealer_email_id: string | null
+  email_template_id: string | null
+  created_at: string
+  updated_at: string
+  // Joined data
+  tags?: Tag[]
+  attachments?: NoteAttachment[]
+  dealer?: Dealer
+}
+
+export interface NoteAttachment {
+  id: string
+  note_id: string
+  storage_path: string
+  file_name: string
+  mime_type: string | null
+  file_size: number | null
+  created_at: string
+  // Computed
+  url?: string
+}
+
+export interface Tag {
+  id: string
+  name: string
+  color: string | null
+  created_at: string
+}
+
+export interface DealerEmail {
+  id: string
+  dealer_id: string
+  label: string | null
+  email: string
+  is_primary: boolean
+  created_at: string
+}
+
+export interface EmailTemplate {
+  id: string
+  name: string
+  description: string | null
+  subject_template: string
+  body_template: string
+  default_for_type: NoteType | null
+  created_at: string
+  updated_at: string
+}
+
+export type EmailStatus = 'pending' | 'sent' | 'failed'
+
+export interface NoteEmail {
+  id: string
+  note_id: string
+  template_id: string | null
+  dealer_email_id: string | null
+  to_addresses: string[]
+  subject: string
+  body: string
+  status: EmailStatus
+  error_message: string | null
+  sent_at: string | null
+  created_at: string
+}
+
+// Filter/Input types
+export interface NotesFilter {
+  dealerId?: string
+  type?: NoteType
+  tagIds?: string[]
+  startDate?: string
+  endDate?: string
+  search?: string
+}
+
+export interface CreateNoteInput {
+  dealer_id: string
+  type: NoteType
+  title?: string
+  body: string
+  visit_date?: string
+  follow_up_date?: string
+  tag_ids?: string[]
+}
+
+export interface UpdateNoteInput {
+  type?: NoteType
+  title?: string
+  body?: string
+  visit_date?: string
+  follow_up_date?: string
+  tag_ids?: string[]
+}
