@@ -1,3 +1,8 @@
 export { NoteForm } from './NoteForm'
 export { NoteTypeSelector } from './NoteTypeSelector'
 export { TagPicker } from './TagPicker'
+export { NoteCard } from './NoteCard'
+export { NoteList } from './NoteList'
+export { NotesFilterBar } from './NotesFilterBar'
+export type { NotesFilterState } from './NotesFilterBar'
+export { AddNoteFab } from './AddNoteFab'
