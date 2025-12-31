@@ -2,7 +2,8 @@
 
 import { Note, NOTE_TYPE_LABELS } from '@/types'
 import { AttachmentPreview } from './AttachmentPreview'
-import { X, Calendar, Clock, Edit2, Trash2 } from 'lucide-react'
+import { X, Calendar, Clock, Edit2, Trash2, FileText, FileDown } from 'lucide-react'
+import { exportNoteAsText, exportNoteAsPdf } from '@/lib/utils/noteExport'
 
 interface NoteDetailDrawerProps {
   note: Note
@@ -162,17 +163,38 @@ export function NoteDetailDrawer({
           </div>
 
           {/* Footer Actions */}
-          <div className="px-4 py-3 border-t bg-gray-50 flex gap-3">
+          <div className="px-4 py-3 border-t bg-gray-50 flex gap-2 flex-wrap">
             {onDelete && (
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-4 py-2.5 border border-red-300 text-red-700 rounded-lg text-sm font-medium hover:bg-red-50 flex items-center gap-2"
+                className="px-3 py-2 border border-red-300 text-red-700 rounded-lg text-sm font-medium hover:bg-red-50 flex items-center gap-1.5"
               >
                 <Trash2 className="w-4 h-4" />
-                Delete
+                <span className="hidden sm:inline">Delete</span>
               </button>
             )}
+            
+            {/* Export buttons */}
+            <button
+              type="button"
+              onClick={() => exportNoteAsText(note)}
+              className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-100 flex items-center gap-1.5"
+              title="Export as text"
+            >
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">Text</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => exportNoteAsPdf(note)}
+              className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-100 flex items-center gap-1.5"
+              title="Export as PDF"
+            >
+              <FileDown className="w-4 h-4" />
+              <span className="hidden sm:inline">PDF</span>
+            </button>
+            
             <div className="flex-1" />
             {onEdit && (
               <button
