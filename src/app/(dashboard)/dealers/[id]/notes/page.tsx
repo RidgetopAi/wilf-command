@@ -10,6 +10,7 @@ import {
   NoteList, 
   NotesFilterBar, 
   AddNoteFab,
+  NoteDetailDrawer,
   NotesFilterState 
 } from '@/components/notes'
 import { createNote, updateNote, deleteNote, createTag, addNoteAttachment, removeNoteAttachment } from './actions'
@@ -32,6 +33,7 @@ export default function NotesPage({ params }: NotesPageProps) {
   
   const [showNoteForm, setShowNoteForm] = useState(false)
   const [editingNote, setEditingNote] = useState<Note | null>(null)
+  const [viewingNote, setViewingNote] = useState<Note | null>(null)
   const [filters, setFilters] = useState<NotesFilterState>({})
 
   // Load initial data
@@ -151,8 +153,25 @@ export default function NotesPage({ params }: NotesPageProps) {
   }
 
   const handleNoteClick = (note: Note) => {
-    setEditingNote(note)
-    setShowNoteForm(true)
+    setViewingNote(note)
+  }
+
+  const handleViewingNoteEdit = () => {
+    if (viewingNote) {
+      setEditingNote(viewingNote)
+      setViewingNote(null)
+      setShowNoteForm(true)
+    }
+  }
+
+  const handleViewingNoteDelete = async () => {
+    if (viewingNote) {
+      const result = await deleteNote(viewingNote.id, dealerId)
+      if (result.success) {
+        setViewingNote(null)
+        await refreshNotes()
+      }
+    }
   }
 
   const handleAddNote = () => {
@@ -290,6 +309,17 @@ export default function NotesPage({ params }: NotesPageProps) {
 
       {/* Floating Action Button */}
       <AddNoteFab onClick={handleAddNote} />
+
+      {/* Note Detail Drawer */}
+      {viewingNote && (
+        <NoteDetailDrawer
+          note={viewingNote}
+          onClose={() => setViewingNote(null)}
+          onEdit={handleViewingNoteEdit}
+          onDelete={handleViewingNoteDelete}
+          onAttachmentDelete={handleAttachmentDelete}
+        />
+      )}
 
       {/* Note Form Modal */}
       {showNoteForm && (
