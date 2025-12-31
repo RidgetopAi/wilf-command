@@ -3,7 +3,7 @@ import { getDisplays, getDealerDisplays } from '@/lib/api/displays'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ProductMixDashboard } from '@/components/product-mix/ProductMixDashboard'
-import { Settings } from 'lucide-react'
+import { Settings, FileText } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,13 +31,22 @@ export default async function DealerDetailPage(props: { params: Promise<{ id: st
           <h1 className="text-2xl font-bold text-gray-900">{dealer.dealer_name}</h1>
           <p className="text-sm text-gray-500">Account #{dealer.account_number}</p>
         </div>
-        <Link
-          href={`/dealers/${dealer.id}/attributes`}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          <Settings className="h-4 w-4" />
-          Attributes
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href={`/dealers/${dealer.id}/notes`}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <FileText className="h-4 w-4" />
+            Notes
+          </Link>
+          <Link
+            href={`/dealers/${dealer.id}/attributes`}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <Settings className="h-4 w-4" />
+            Attributes
+          </Link>
+        </div>
       </div>
 
       {/* Dealer Summary Strip */}
