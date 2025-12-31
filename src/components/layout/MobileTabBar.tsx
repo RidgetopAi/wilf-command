@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Store, Upload, Shield, Target } from 'lucide-react'
+import { LayoutDashboard, Store, Upload, Shield, Target, FileText } from 'lucide-react'
 
 interface MobileTabBarProps {
   isManager?: boolean
@@ -13,8 +13,8 @@ export function MobileTabBar({ isManager = false }: MobileTabBarProps) {
 
   const items = [
     { href: '/', label: 'Command', icon: LayoutDashboard },
-    { href: '/opportunities', label: 'Opps', icon: Target },
     { href: '/dealers', label: 'Dealers', icon: Store },
+    { href: '/notes', label: 'Notes', icon: FileText },
     { href: '/upload', label: 'Upload', icon: Upload },
     ...(isManager ? [{ href: '/manager', label: 'Manager', icon: Shield }] : []),
   ]

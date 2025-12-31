@@ -179,7 +179,7 @@ export const NOTE_TYPE_LABELS: Record<NoteType, string> = {
 
 export interface Note {
   id: string
-  dealer_id: string
+  dealer_id: string | null
   type: NoteType
   title: string | null
   body: string
@@ -262,7 +262,7 @@ export interface NotesFilter {
 }
 
 export interface CreateNoteInput {
-  dealer_id: string
+  dealer_id?: string | null
   type: NoteType
   title?: string
   body: string

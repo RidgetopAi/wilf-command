@@ -15,7 +15,7 @@ interface PendingAttachment {
 
 interface AttachmentUploaderProps {
   noteId?: string
-  dealerId: string
+  dealerId?: string | null
   onUploadComplete?: (attachment: {
     storagePath: string
     fileName: string
@@ -122,7 +122,7 @@ export function AttachmentUploader({
     // Generate storage path
     const ext = item.file.name.split('.').pop() || 'bin'
     const timestamp = Date.now()
-    const storagePath = `${dealerId}/${noteId || 'draft'}/${timestamp}_${item.id}.${ext}`
+    const storagePath = `${dealerId || 'general'}/${noteId || 'draft'}/${timestamp}_${item.id}.${ext}`
 
     const { error } = await supabase.storage
       .from('note-attachments')

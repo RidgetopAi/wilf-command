@@ -1,11 +1,12 @@
 'use client'
 
 import { Note, NOTE_TYPE_LABELS } from '@/types'
-import { Calendar, Paperclip, Clock } from 'lucide-react'
+import { Calendar, Paperclip, Clock, Store } from 'lucide-react'
 
 interface NoteCardProps {
   note: Note
   onClick?: () => void
+  showDealer?: boolean
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -18,7 +19,7 @@ const TYPE_COLORS: Record<string, string> = {
   personal: 'bg-gray-100 text-gray-800'
 }
 
-export function NoteCard({ note, onClick }: NoteCardProps) {
+export function NoteCard({ note, onClick, showDealer }: NoteCardProps) {
   const typeColor = TYPE_COLORS[note.type] || 'bg-gray-100 text-gray-800'
   const hasFollowUp = !!note.follow_up_date
   const attachmentCount = note.attachments?.length || 0
@@ -40,11 +41,19 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
       onClick={onClick}
       className="w-full text-left bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all"
     >
-      {/* Header: Type + Date */}
+      {/* Header: Type + Dealer + Date */}
       <div className="flex items-center justify-between mb-2">
-        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeColor}`}>
-          {NOTE_TYPE_LABELS[note.type]}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeColor}`}>
+            {NOTE_TYPE_LABELS[note.type]}
+          </span>
+          {showDealer && note.dealer && (
+            <span className="text-xs text-gray-600 flex items-center gap-1">
+              <Store className="w-3 h-3" />
+              {note.dealer.dealer_name}
+            </span>
+          )}
+        </div>
         <span className="text-xs text-gray-500 flex items-center gap-1">
           <Calendar className="w-3 h-3" />
           {formatDate(note.visit_date)}

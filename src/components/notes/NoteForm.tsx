@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Note, NoteType, Tag, NoteAttachment } from '@/types'
+import { Note, NoteType, Tag, NoteAttachment, Dealer } from '@/types'
 import { NoteTypeSelector } from './NoteTypeSelector'
 import { TagPicker } from './TagPicker'
 import { AttachmentUploader, PendingAttachment } from './AttachmentUploader'
 import { AttachmentPreview } from './AttachmentPreview'
-import { X, Calendar, Save, Loader2 } from 'lucide-react'
+import { X, Calendar, Save, Loader2, Store, ChevronDown } from 'lucide-react'
 
 interface UploadedAttachment {
   storagePath: string
@@ -15,10 +15,17 @@ interface UploadedAttachment {
   fileSize: number
 }
 
+interface DealerOption {
+  id: string
+  dealer_name: string
+  account_number: string
+}
+
 interface NoteFormProps {
-  dealerId: string
+  dealerId?: string | null
   note?: Note
   tags: Tag[]
+  dealers?: DealerOption[]
   onSave: (formData: FormData) => Promise<{ success: boolean; error?: string; noteId?: string }>
   onCancel: () => void
   onTagCreate?: (name: string) => Promise<Tag | null>
@@ -27,9 +34,10 @@ interface NoteFormProps {
 }
 
 export function NoteForm({ 
-  dealerId, 
+  dealerId: initialDealerId, 
   note, 
   tags, 
+  dealers,
   onSave, 
   onCancel,
   onTagCreate,
@@ -39,6 +47,9 @@ export function NoteForm({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   
+  const [selectedDealerId, setSelectedDealerId] = useState<string | null>(
+    note?.dealer_id || initialDealerId || null
+  )
   const [type, setType] = useState<NoteType>(note?.type || 'visit')
   const [title, setTitle] = useState(note?.title || '')
   const [body, setBody] = useState(note?.body || '')
@@ -79,7 +90,9 @@ export function NoteForm({
     formData.set('visit_date', visitDate)
     formData.set('follow_up_date', followUpDate)
     formData.set('tag_ids', JSON.stringify(selectedTagIds))
-    formData.set('dealer_id', dealerId)
+    if (selectedDealerId) {
+      formData.set('dealer_id', selectedDealerId)
+    }
     
     // Include pending attachment info for the server to create records
     formData.set('new_attachments', JSON.stringify(uploadedAttachments))
@@ -150,6 +163,31 @@ export function NoteForm({
               </label>
               <NoteTypeSelector value={type} onChange={setType} />
             </div>
+
+            {/* Dealer Picker (only shown when dealers list is provided) */}
+            {dealers && dealers.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <Store className="w-4 h-4 inline mr-1" />
+                  Dealer <span className="text-gray-400">(optional)</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedDealerId || ''}
+                    onChange={e => setSelectedDealerId(e.target.value || null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white pr-10"
+                  >
+                    <option value="">No dealer assigned</option>
+                    {dealers.map(dealer => (
+                      <option key={dealer.id} value={dealer.id}>
+                        {dealer.dealer_name} (#{dealer.account_number})
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+            )}
 
             {/* Date Row */}
             <div className="grid grid-cols-2 gap-3">
@@ -235,7 +273,7 @@ export function NoteForm({
               </label>
               <AttachmentUploader
                 noteId={note?.id}
-                dealerId={dealerId}
+                dealerId={selectedDealerId}
                 onUploadComplete={handleUploadComplete}
                 onPendingChange={setPendingAttachments}
               />

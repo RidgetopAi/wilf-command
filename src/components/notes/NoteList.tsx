@@ -8,9 +8,10 @@ interface NoteListProps {
   notes: Note[]
   onNoteClick?: (note: Note) => void
   emptyMessage?: string
+  showDealer?: boolean
 }
 
-export function NoteList({ notes, onNoteClick, emptyMessage }: NoteListProps) {
+export function NoteList({ notes, onNoteClick, emptyMessage, showDealer }: NoteListProps) {
   if (notes.length === 0) {
     return (
       <div className="text-center py-12">
@@ -29,6 +30,7 @@ export function NoteList({ notes, onNoteClick, emptyMessage }: NoteListProps) {
           key={note.id}
           note={note}
           onClick={() => onNoteClick?.(note)}
+          showDealer={showDealer}
         />
       ))}
     </div>
