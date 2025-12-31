@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NoteAttachment } from '@/types'
 import { X, Download, Trash2, Image as ImageIcon, FileText, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -177,7 +177,7 @@ function ImageThumbnail({ attachment }: { attachment: NoteAttachment }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
-  useState(() => {
+  useEffect(() => {
     const loadUrl = async () => {
       const supabase = createClient()
       const { data, error } = await supabase.storage
@@ -192,7 +192,7 @@ function ImageThumbnail({ attachment }: { attachment: NoteAttachment }) {
       setLoading(false)
     }
     loadUrl()
-  })
+  }, [attachment.storage_path])
 
   if (loading) {
     return <div className="w-full h-full bg-gray-200 animate-pulse" />
