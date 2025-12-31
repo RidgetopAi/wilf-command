@@ -43,20 +43,27 @@ export function AttachmentPreview({ attachments, onDelete, readOnly = false }: A
     const mimeType = attachment.mime_type
     
     // For text files, fetch content to display inline
-    if (mimeType === 'text/plain') {
+    if (isText(mimeType, attachment.file_name)) {
       setLightboxLoading(true)
       try {
         const response = await fetch(url)
+        if (!response.ok) throw new Error('Fetch failed')
         const textContent = await response.text()
         setLightbox({
           url,
-          mimeType,
+          mimeType: 'text/plain',
           fileName: attachment.file_name,
           textContent
         })
       } catch (err) {
         console.error('Failed to fetch text content:', err)
-        window.open(url, '_blank')
+        // Fallback: open in lightbox with download option
+        setLightbox({
+          url,
+          mimeType: 'text/plain',
+          fileName: attachment.file_name,
+          textContent: '[Unable to preview - click download or open in new tab]'
+        })
       } finally {
         setLightboxLoading(false)
       }
@@ -101,7 +108,8 @@ export function AttachmentPreview({ attachments, onDelete, readOnly = false }: A
 
   const isImage = (mimeType: string | null) => mimeType?.startsWith('image/')
   const isPdf = (mimeType: string | null) => mimeType === 'application/pdf'
-  const isText = (mimeType: string | null) => mimeType === 'text/plain'
+  const isText = (mimeType: string | null, fileName?: string) => 
+    mimeType === 'text/plain' || mimeType?.startsWith('text/') || fileName?.toLowerCase().endsWith('.txt')
 
   const getFileIcon = (mimeType: string | null) => {
     if (isImage(mimeType)) return ImageIcon
@@ -252,7 +260,7 @@ export function AttachmentPreview({ attachments, onDelete, readOnly = false }: A
             )}
 
             {/* Text file */}
-            {isText(lightbox.mimeType) && lightbox.textContent !== undefined && (
+            {isText(lightbox.mimeType, lightbox.fileName) && lightbox.textContent !== undefined && (
               <div className="w-full max-w-3xl max-h-full overflow-auto bg-white rounded-lg p-4 sm:p-6">
                 <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono">
                   {lightbox.textContent}
