@@ -1,18 +1,29 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Note, NoteType, Tag } from '@/types'
+import { Note, NoteType, Tag, NoteAttachment } from '@/types'
 import { NoteTypeSelector } from './NoteTypeSelector'
 import { TagPicker } from './TagPicker'
+import { AttachmentUploader, PendingAttachment } from './AttachmentUploader'
+import { AttachmentPreview } from './AttachmentPreview'
 import { X, Calendar, Save, Loader2 } from 'lucide-react'
+
+interface UploadedAttachment {
+  storagePath: string
+  fileName: string
+  mimeType: string
+  fileSize: number
+}
 
 interface NoteFormProps {
   dealerId: string
   note?: Note
   tags: Tag[]
-  onSave: (formData: FormData) => Promise<{ success: boolean; error?: string }>
+  onSave: (formData: FormData) => Promise<{ success: boolean; error?: string; noteId?: string }>
   onCancel: () => void
   onTagCreate?: (name: string) => Promise<Tag | null>
+  onAttachmentAdd?: (noteId: string, attachment: UploadedAttachment) => Promise<void>
+  onAttachmentDelete?: (attachmentId: string) => Promise<void>
 }
 
 export function NoteForm({ 
@@ -21,7 +32,9 @@ export function NoteForm({
   tags, 
   onSave, 
   onCancel,
-  onTagCreate 
+  onTagCreate,
+  onAttachmentAdd,
+  onAttachmentDelete
 }: NoteFormProps) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -36,6 +49,13 @@ export function NoteForm({
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
     note?.tags?.map(t => t.id) || []
   )
+  
+  // Attachments state
+  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([])
+  const [uploadedAttachments, setUploadedAttachments] = useState<UploadedAttachment[]>([])
+  const [existingAttachments, setExistingAttachments] = useState<NoteAttachment[]>(
+    note?.attachments || []
+  )
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,6 +63,12 @@ export function NoteForm({
 
     if (!body.trim()) {
       setError('Note content is required')
+      return
+    }
+
+    // Check if there are still uploads in progress
+    if (pendingAttachments.some(p => p.uploading)) {
+      setError('Please wait for attachments to finish uploading')
       return
     }
 
@@ -54,11 +80,19 @@ export function NoteForm({
     formData.set('follow_up_date', followUpDate)
     formData.set('tag_ids', JSON.stringify(selectedTagIds))
     formData.set('dealer_id', dealerId)
+    
+    // Include pending attachment info for the server to create records
+    formData.set('new_attachments', JSON.stringify(uploadedAttachments))
 
     startTransition(async () => {
       const result = await onSave(formData)
       if (!result.success) {
         setError(result.error || 'Failed to save note')
+      } else if (result.noteId && uploadedAttachments.length > 0 && onAttachmentAdd) {
+        // Add attachment records after note is created
+        for (const attachment of uploadedAttachments) {
+          await onAttachmentAdd(result.noteId, attachment)
+        }
       }
     })
   }
@@ -69,6 +103,17 @@ export function NoteForm({
         ? prev.filter(id => id !== tagId)
         : [...prev, tagId]
     )
+  }
+
+  const handleUploadComplete = (attachment: UploadedAttachment) => {
+    setUploadedAttachments(prev => [...prev, attachment])
+  }
+
+  const handleDeleteExisting = async (attachmentId: string) => {
+    if (onAttachmentDelete) {
+      await onAttachmentDelete(attachmentId)
+      setExistingAttachments(prev => prev.filter(a => a.id !== attachmentId))
+    }
   }
 
   return (
@@ -174,6 +219,27 @@ export function NoteForm({
                 onCreate={onTagCreate}
               />
             </div>
+
+            {/* Existing Attachments (when editing) */}
+            {existingAttachments.length > 0 && (
+              <AttachmentPreview
+                attachments={existingAttachments}
+                onDelete={onAttachmentDelete ? handleDeleteExisting : undefined}
+              />
+            )}
+
+            {/* Attachment Uploader */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Attachments
+              </label>
+              <AttachmentUploader
+                noteId={note?.id}
+                dealerId={dealerId}
+                onUploadComplete={handleUploadComplete}
+                onPendingChange={setPendingAttachments}
+              />
+            </div>
           </div>
         </form>
 
@@ -189,7 +255,7 @@ export function NoteForm({
           <button
             type="submit"
             onClick={handleSubmit}
-            disabled={isPending || !body.trim()}
+            disabled={isPending || !body.trim() || pendingAttachments.some(p => p.uploading)}
             className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isPending ? (

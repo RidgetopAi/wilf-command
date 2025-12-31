@@ -12,7 +12,7 @@ import {
   AddNoteFab,
   NotesFilterState 
 } from '@/components/notes'
-import { createNote, updateNote, deleteNote, createTag } from './actions'
+import { createNote, updateNote, deleteNote, createTag, addNoteAttachment, removeNoteAttachment } from './actions'
 import { createClient } from '@/lib/supabase/client'
 
 interface NotesPageProps {
@@ -160,7 +160,7 @@ export default function NotesPage({ params }: NotesPageProps) {
     setShowNoteForm(true)
   }
 
-  const handleSaveNote = async (formData: FormData): Promise<{ success: boolean; error?: string }> => {
+  const handleSaveNote = async (formData: FormData): Promise<{ success: boolean; error?: string; noteId?: string }> => {
     if (editingNote) {
       const result = await updateNote(editingNote.id, formData)
       if (result.success) {
@@ -179,6 +179,19 @@ export default function NotesPage({ params }: NotesPageProps) {
       }
       return result
     }
+  }
+
+  const handleAttachmentAdd = async (
+    noteId: string, 
+    attachment: { storagePath: string; fileName: string; mimeType: string; fileSize: number }
+  ) => {
+    await addNoteAttachment(noteId, attachment.storagePath, attachment.fileName, attachment.mimeType, attachment.fileSize)
+    await refreshNotes()
+  }
+
+  const handleAttachmentDelete = async (attachmentId: string) => {
+    await removeNoteAttachment(attachmentId)
+    await refreshNotes()
   }
 
   const handleCancelNote = () => {
@@ -287,6 +300,8 @@ export default function NotesPage({ params }: NotesPageProps) {
           onSave={handleSaveNote}
           onCancel={handleCancelNote}
           onTagCreate={handleCreateTag}
+          onAttachmentAdd={handleAttachmentAdd}
+          onAttachmentDelete={handleAttachmentDelete}
         />
       )}
     </div>
