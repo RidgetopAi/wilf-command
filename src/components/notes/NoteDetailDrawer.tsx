@@ -16,7 +16,9 @@ interface NoteDetailDrawerProps {
 const TYPE_COLORS: Record<string, string> = {
   visit: 'bg-blue-100 text-blue-800',
   follow_up: 'bg-purple-100 text-purple-800',
-  vp_opportunity: 'bg-amber-100 text-amber-800',
+  vp: 'bg-amber-100 text-amber-800',
+  opportunity: 'bg-cyan-100 text-cyan-800',
+  plan: 'bg-indigo-100 text-indigo-800',
   issue: 'bg-red-100 text-red-800',
   quote: 'bg-green-100 text-green-800',
   order: 'bg-emerald-100 text-emerald-800',

@@ -95,7 +95,9 @@ export function formatNoteAsHtml(note: Note): string {
   const typeColors: Record<string, { bg: string; text: string }> = {
     visit: { bg: '#dbeafe', text: '#1e40af' },
     follow_up: { bg: '#f3e8ff', text: '#6b21a8' },
-    vp_opportunity: { bg: '#fef3c7', text: '#92400e' },
+    vp: { bg: '#fef3c7', text: '#92400e' },
+    opportunity: { bg: '#cffafe', text: '#0e7490' },
+    plan: { bg: '#e0e7ff', text: '#4338ca' },
     issue: { bg: '#fee2e2', text: '#b91c1c' },
     quote: { bg: '#dcfce7', text: '#166534' },
     order: { bg: '#d1fae5', text: '#065f46' },

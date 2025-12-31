@@ -10,7 +10,9 @@ interface NoteTypeSelectorProps {
 const NOTE_TYPES: NoteType[] = [
   'visit',
   'follow_up',
-  'vp_opportunity',
+  'vp',
+  'opportunity',
+  'plan',
   'issue',
   'quote',
   'order',

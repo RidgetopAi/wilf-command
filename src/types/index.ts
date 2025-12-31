@@ -161,7 +161,9 @@ export interface InactiveAduraDealer {
 export type NoteType = 
   | 'visit' 
   | 'follow_up' 
-  | 'vp_opportunity' 
+  | 'vp' 
+  | 'opportunity' 
+  | 'plan'
   | 'issue' 
   | 'quote' 
   | 'order' 
@@ -170,7 +172,9 @@ export type NoteType =
 export const NOTE_TYPE_LABELS: Record<NoteType, string> = {
   visit: 'Visit',
   follow_up: 'Follow-up',
-  vp_opportunity: 'V.P. Opportunity',
+  vp: 'V.P.',
+  opportunity: 'Opportunity',
+  plan: 'Plan',
   issue: 'Issue',
   quote: 'Quote',
   order: 'Order',
