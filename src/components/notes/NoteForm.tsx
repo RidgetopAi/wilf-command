@@ -101,10 +101,14 @@ export function NoteForm({
       const result = await onSave(formData)
       if (!result.success) {
         setError(result.error || 'Failed to save note')
-      } else if (result.noteId && uploadedAttachments.length > 0 && onAttachmentAdd) {
-        // Add attachment records after note is created
-        for (const attachment of uploadedAttachments) {
-          await onAttachmentAdd(result.noteId, attachment)
+      } else if (uploadedAttachments.length > 0 && onAttachmentAdd) {
+        // Add attachment records after note is saved
+        // For new notes use result.noteId, for edits use existing note.id
+        const targetNoteId = result.noteId || note?.id
+        if (targetNoteId) {
+          for (const attachment of uploadedAttachments) {
+            await onAttachmentAdd(targetNoteId, attachment)
+          }
         }
       }
     })
