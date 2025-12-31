@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { NoteAttachment } from '@/types'
-import { X, Download, Trash2, Image as ImageIcon, FileText, ExternalLink } from 'lucide-react'
+import { X, Download, Trash2, Image as ImageIcon, FileText, ExternalLink, File, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface AttachmentPreviewProps {
@@ -11,8 +11,16 @@ interface AttachmentPreviewProps {
   readOnly?: boolean
 }
 
+interface LightboxState {
+  url: string
+  mimeType: string | null
+  fileName: string
+  textContent?: string
+}
+
 export function AttachmentPreview({ attachments, onDelete, readOnly = false }: AttachmentPreviewProps) {
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [lightbox, setLightbox] = useState<LightboxState | null>(null)
+  const [lightboxLoading, setLightboxLoading] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
 
   const getSignedUrl = async (storagePath: string): Promise<string | null> => {
@@ -32,11 +40,41 @@ export function AttachmentPreview({ attachments, onDelete, readOnly = false }: A
     const url = await getSignedUrl(attachment.storage_path)
     if (!url) return
 
-    if (attachment.mime_type?.startsWith('image/')) {
-      setLightboxUrl(url)
-    } else {
-      window.open(url, '_blank')
+    const mimeType = attachment.mime_type
+    
+    // For text files, fetch content to display inline
+    if (mimeType === 'text/plain') {
+      setLightboxLoading(true)
+      try {
+        const response = await fetch(url)
+        const textContent = await response.text()
+        setLightbox({
+          url,
+          mimeType,
+          fileName: attachment.file_name,
+          textContent
+        })
+      } catch (err) {
+        console.error('Failed to fetch text content:', err)
+        window.open(url, '_blank')
+      } finally {
+        setLightboxLoading(false)
+      }
+      return
     }
+
+    // Images and PDFs open in lightbox
+    if (mimeType?.startsWith('image/') || mimeType === 'application/pdf') {
+      setLightbox({
+        url,
+        mimeType,
+        fileName: attachment.file_name
+      })
+      return
+    }
+
+    // Other files open in new tab
+    window.open(url, '_blank')
   }
 
   const handleDownload = async (attachment: NoteAttachment) => {
@@ -62,12 +100,20 @@ export function AttachmentPreview({ attachments, onDelete, readOnly = false }: A
   }
 
   const isImage = (mimeType: string | null) => mimeType?.startsWith('image/')
+  const isPdf = (mimeType: string | null) => mimeType === 'application/pdf'
+  const isText = (mimeType: string | null) => mimeType === 'text/plain'
 
-  const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return ''
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  const getFileIcon = (mimeType: string | null) => {
+    if (isImage(mimeType)) return ImageIcon
+    if (isPdf(mimeType)) return File
+    if (isText(mimeType)) return FileText
+    return FileText
+  }
+
+  const getFileColor = (mimeType: string | null) => {
+    if (isPdf(mimeType)) return 'text-red-500'
+    if (isText(mimeType)) return 'text-blue-500'
+    return 'text-gray-400'
   }
 
   if (attachments.length === 0) return null
@@ -79,10 +125,10 @@ export function AttachmentPreview({ attachments, onDelete, readOnly = false }: A
           Attachments ({attachments.length})
         </p>
         
-        {/* Grid for images, list for files */}
         <div className="grid grid-cols-3 gap-2">
           {attachments.map(attachment => {
-            const FileIcon = isImage(attachment.mime_type) ? ImageIcon : FileText
+            const FileIcon = getFileIcon(attachment.mime_type)
+            const fileColor = getFileColor(attachment.mime_type)
 
             return (
               <div
@@ -103,9 +149,14 @@ export function AttachmentPreview({ attachments, onDelete, readOnly = false }: A
                     onClick={() => handleView(attachment)}
                     className="w-full aspect-square rounded-lg bg-gray-100 flex flex-col items-center justify-center p-2 hover:bg-gray-200 transition-colors"
                   >
-                    <FileIcon className="w-6 h-6 text-gray-400 mb-1" />
-                    <span className="text-xs text-gray-600 truncate w-full text-center px-1">
+                    <FileIcon className={`w-8 h-8 ${fileColor} mb-1`} />
+                    <span className="text-xs text-gray-600 truncate w-full text-center px-1 font-medium">
                       {attachment.file_name.split('.').pop()?.toUpperCase()}
+                    </span>
+                    <span className="text-[10px] text-gray-400 truncate w-full text-center px-1">
+                      {attachment.file_name.length > 12 
+                        ? attachment.file_name.slice(0, 10) + '...' 
+                        : attachment.file_name.split('.')[0]}
                     </span>
                   </button>
                 )}
@@ -138,34 +189,77 @@ export function AttachmentPreview({ attachments, onDelete, readOnly = false }: A
         </div>
       </div>
 
-      {/* Lightbox */}
-      {lightboxUrl && (
+      {/* Loading overlay */}
+      {lightboxLoading && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-white animate-spin" />
+        </div>
+      )}
+
+      {/* Enhanced Lightbox */}
+      {lightbox && (
         <div 
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setLightboxUrl(null)}
+          className="fixed inset-0 z-50 bg-black/90 flex flex-col"
+          onClick={() => setLightbox(null)}
         >
-          <button
-            type="button"
-            onClick={() => setLightboxUrl(null)}
-            className="absolute top-4 right-4 p-2 text-white hover:bg-white/10 rounded-full"
-          >
-            <X className="w-6 h-6" />
-          </button>
-          <a
-            href={lightboxUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="absolute top-4 left-4 p-2 text-white hover:bg-white/10 rounded-full"
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 text-white">
+            <div className="flex items-center gap-3">
+              <a
+                href={lightbox.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 hover:bg-white/10 rounded-full"
+                onClick={e => e.stopPropagation()}
+                title="Open in new tab"
+              >
+                <ExternalLink className="w-5 h-5" />
+              </a>
+              <span className="text-sm font-medium truncate max-w-[200px] sm:max-w-none">
+                {lightbox.fileName}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setLightbox(null)}
+              className="p-2 hover:bg-white/10 rounded-full"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div 
+            className="flex-1 flex items-center justify-center p-4 overflow-auto"
             onClick={e => e.stopPropagation()}
           >
-            <ExternalLink className="w-6 h-6" />
-          </a>
-          <img
-            src={lightboxUrl}
-            alt=""
-            className="max-w-full max-h-full object-contain"
-            onClick={e => e.stopPropagation()}
-          />
+            {/* Image */}
+            {isImage(lightbox.mimeType) && (
+              <img
+                src={lightbox.url}
+                alt={lightbox.fileName}
+                className="max-w-full max-h-full object-contain"
+              />
+            )}
+
+            {/* PDF */}
+            {isPdf(lightbox.mimeType) && (
+              <iframe
+                src={lightbox.url}
+                className="w-full h-full bg-white rounded-lg"
+                title={lightbox.fileName}
+              />
+            )}
+
+            {/* Text file */}
+            {isText(lightbox.mimeType) && lightbox.textContent !== undefined && (
+              <div className="w-full max-w-3xl max-h-full overflow-auto bg-white rounded-lg p-4 sm:p-6">
+                <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono">
+                  {lightbox.textContent}
+                </pre>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </>
