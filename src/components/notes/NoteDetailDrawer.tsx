@@ -59,10 +59,10 @@ export function NoteDetailDrawer({
     >
       {/* Drawer - slides up from bottom on mobile, centered modal on desktop */}
       <div 
-        className="absolute bottom-0 left-0 right-0 sm:static sm:absolute sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-lg sm:w-full sm:mx-4"
+        className="absolute bottom-0 left-0 right-0 sm:inset-0 sm:flex sm:items-center sm:justify-center sm:p-4"
         onClick={e => e.stopPropagation()}
       >
-        <div className="bg-white rounded-t-2xl sm:rounded-xl max-h-[85vh] overflow-hidden flex flex-col shadow-xl">
+        <div className="bg-white rounded-t-2xl sm:rounded-xl max-h-[85vh] sm:max-w-lg sm:w-full overflow-hidden flex flex-col shadow-xl">
           {/* Drag Handle (mobile) */}
           <div className="flex justify-center pt-2 pb-1 sm:hidden">
             <div className="w-10 h-1 rounded-full bg-gray-300" />
