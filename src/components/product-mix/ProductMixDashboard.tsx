@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { useProductMix, useProductMixTargets } from '@/lib/hooks'
 import { ProductMixGrid } from './ProductMixGrid'
 import { ProductMixChart } from './ProductMixChart'
@@ -15,7 +16,25 @@ interface ProductMixDashboardProps {
 }
 
 export function ProductMixDashboard({ repId, accountNumber, displays = [] }: ProductMixDashboardProps) {
-  const [year, setYear] = useState(new Date().getFullYear())
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const currentYear = new Date().getFullYear()
+
+  // Read year from URL or default to current year
+  const urlYear = searchParams.get('year')
+  const [year, setYear] = useState(urlYear ? parseInt(urlYear, 10) : currentYear)
+
+  // Update URL when year changes
+  const handleYearChange = (newYear: number) => {
+    setYear(newYear)
+    const params = new URLSearchParams(searchParams.toString())
+    if (newYear === currentYear) {
+      params.delete('year')
+    } else {
+      params.set('year', newYear.toString())
+    }
+    router.replace(`?${params.toString()}`, { scroll: false })
+  }
 
   const { 
     data: mixData = [], 
@@ -65,9 +84,9 @@ export function ProductMixDashboard({ repId, accountNumber, displays = [] }: Pro
   return (
     <div className="space-y-8">
       <div className="flex justify-end">
-        <select 
-          value={year} 
-          onChange={(e) => setYear(Number(e.target.value))}
+        <select
+          value={year}
+          onChange={(e) => handleYearChange(Number(e.target.value))}
           className="block w-32 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
         >
           <option value={2024}>2024</option>

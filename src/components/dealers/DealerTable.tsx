@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Dealer } from '@/types'
 import { Search, ChevronRight } from 'lucide-react'
 
@@ -34,6 +35,9 @@ function getActiveIndicators(dealer: Dealer) {
 
 export function DealerTable({ dealers }: DealerTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
+  const searchParams = useSearchParams()
+  const yearParam = searchParams.get('year')
+  const yearSuffix = yearParam ? `?year=${yearParam}` : ''
 
   const filteredDealers = dealers.filter(dealer =>
     dealer.dealer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -65,7 +69,7 @@ export function DealerTable({ dealers }: DealerTableProps) {
         {filteredDealers.map((dealer) => {
           const { segments, stocking } = getActiveIndicators(dealer)
           return (
-            <Link key={dealer.id} href={`/dealers/${dealer.id}`}>
+            <Link key={dealer.id} href={`/dealers/${dealer.id}${yearSuffix}`}>
               <div className="bg-white p-4 rounded-lg shadow border border-gray-100 active:bg-gray-50">
                 <div className="flex justify-between items-start">
                   <div className="flex-1 min-w-0">
@@ -130,7 +134,7 @@ export function DealerTable({ dealers }: DealerTableProps) {
               return (
                 <tr key={dealer.id} className="hover:bg-gray-50">
                   <td className="px-4 py-4 whitespace-nowrap">
-                    <Link href={`/dealers/${dealer.id}`} className="block">
+                    <Link href={`/dealers/${dealer.id}${yearSuffix}`} className="block">
                       <div className="text-sm font-medium text-indigo-600 hover:text-indigo-900">
                         {dealer.dealer_name}
                       </div>
@@ -170,7 +174,7 @@ export function DealerTable({ dealers }: DealerTableProps) {
                     )}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link href={`/dealers/${dealer.id}`} className="text-indigo-600 hover:text-indigo-900">
+                    <Link href={`/dealers/${dealer.id}${yearSuffix}`} className="text-indigo-600 hover:text-indigo-900">
                       View
                     </Link>
                   </td>

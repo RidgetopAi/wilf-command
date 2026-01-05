@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { useTerritoryOverview, useTerritoryMonthlyMix } from '@/lib/hooks'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts'
 import { KpiPill, MobileCollapsible } from '@/components/ui'
@@ -33,7 +34,25 @@ function formatNumber(value: number): string {
 }
 
 export function CommandDashboard({ repId }: CommandDashboardProps) {
-  const [year, setYear] = useState(new Date().getFullYear())
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const currentYear = new Date().getFullYear()
+
+  // Read year from URL or default to current year
+  const urlYear = searchParams.get('year')
+  const [year, setYear] = useState(urlYear ? parseInt(urlYear, 10) : currentYear)
+
+  // Update URL when year changes
+  const handleYearChange = (newYear: number) => {
+    setYear(newYear)
+    const params = new URLSearchParams(searchParams.toString())
+    if (newYear === currentYear) {
+      params.delete('year') // Don't clutter URL with default year
+    } else {
+      params.set('year', newYear.toString())
+    }
+    router.replace(`?${params.toString()}`, { scroll: false })
+  }
   
   const { 
     data: overview, 
@@ -121,7 +140,7 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
         </div>
         <select
           value={year}
-          onChange={(e) => setYear(Number(e.target.value))}
+          onChange={(e) => handleYearChange(Number(e.target.value))}
           className="block w-32 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
         >
           <option value={2024}>2024</option>
@@ -341,7 +360,7 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
         <MobileCollapsible title="Top 10 Dealers">
           <div className="bg-white rounded-lg shadow divide-y divide-gray-200">
             {overview.topDealers.slice(0, 10).map((dealer, index) => (
-              <a key={dealer.account_number} href={`/dealers?account=${dealer.account_number}`} className="block px-4 py-3 hover:bg-gray-50">
+              <a key={dealer.account_number} href={`/dealers?account=${dealer.account_number}${year !== currentYear ? `&year=${year}` : ''}`} className="block px-4 py-3 hover:bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-gray-400 font-medium w-5">{index + 1}</span>
