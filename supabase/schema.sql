@@ -137,10 +137,14 @@ CREATE TABLE product_mix_monthly (
   sheet_pct DECIMAL(5,2) DEFAULT 0,
   
   total_sales DECIMAL(12,2) DEFAULT 0,
-  
+
+  -- Period tracking for cumulative uploads
+  period_start DATE,
+  period_end DATE,
+
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   UNIQUE(rep_id, account_number, year, month),
   FOREIGN KEY (account_number, rep_id) REFERENCES dealers(account_number, rep_id)
 );

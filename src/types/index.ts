@@ -110,6 +110,10 @@ export interface ProductMixMonthly {
   total_qty: number
   total_orders: number
 
+  // Period tracking for cumulative uploads
+  period_start: string | null
+  period_end: string | null
+
   created_at: string
   updated_at: string
 }

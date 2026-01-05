@@ -213,33 +213,50 @@ export async function parseMonthlySalesPreview(
 // Check for existing records that would be overwritten
 export async function checkExistingRecords(
   repId: string,
-  year: number,
-  month: number
-): Promise<number> {
+  periodStart: Date
+): Promise<{ count: number; existingPeriod: { start: string | null; end: string | null } | null }> {
   const supabase = createClient()
-  const { count, error } = await supabase
+  const year = periodStart.getFullYear()
+  const month = periodStart.getMonth() + 1
+
+  const { data, count, error } = await supabase
     .from('product_mix_monthly')
-    .select('*', { count: 'exact', head: true })
+    .select('period_start, period_end', { count: 'exact' })
     .eq('rep_id', repId)
     .eq('year', year)
     .eq('month', month)
+    .limit(1)
 
   if (error) {
     console.error('Error checking existing records:', error)
-    return 0
+    return { count: 0, existingPeriod: null }
   }
-  return count || 0
+
+  const existingPeriod = data && data.length > 0
+    ? { start: data[0].period_start, end: data[0].period_end }
+    : null
+
+  return { count: count || 0, existingPeriod }
+}
+
+// Helper to format date as YYYY-MM-DD for PostgreSQL
+function formatDateForDB(date: Date): string {
+  return date.toISOString().split('T')[0]
 }
 
 // Commit preview data to database
 export async function commitSalesData(
   parsedData: Map<string, AggregatedSales>,
   repId: string,
-  year: number,
-  month: number
+  periodStart: Date,
+  periodEnd: Date
 ): Promise<{ success: number; errors: number; details: string[] }> {
   const supabase = createClient()
   const result = { success: 0, errors: 0, details: [] as string[] }
+
+  // Derive year/month from periodStart for the upsert key
+  const year = periodStart.getFullYear()
+  const month = periodStart.getMonth() + 1
 
   for (const [accountNumber, sales] of parsedData.entries()) {
     const total_sales =
@@ -263,6 +280,8 @@ export async function commitSalesData(
       sundries_pct: total_sales ? (sales.sundries_sales / total_sales) * 100 : 0,
       ns_resp_pct: total_sales ? (sales.ns_resp_sales / total_sales) * 100 : 0,
       sheet_pct: total_sales ? (sales.sheet_sales / total_sales) * 100 : 0,
+      period_start: formatDateForDB(periodStart),
+      period_end: formatDateForDB(periodEnd),
       updated_at: new Date().toISOString()
     }
 

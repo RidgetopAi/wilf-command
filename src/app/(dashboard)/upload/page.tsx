@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { CSVUploader } from '@/components/upload/CSVUploader'
 import { parseAndUploadAccountMapping } from '@/lib/parsers/accountMapping'
@@ -13,20 +13,51 @@ import {
 import { getRepId } from './actions'
 import { territoryKeys, productMixKeys, dealerKeys } from '@/lib/hooks'
 
+// Helper to format date as YYYY-MM-DD for input fields
+function formatDateForInput(date: Date): string {
+  return date.toISOString().split('T')[0]
+}
+
+// Helper to format date range for display
+function formatDateRange(start: Date, end: Date): string {
+  const startMonth = start.toLocaleString('default', { month: 'short' })
+  const endMonth = end.toLocaleString('default', { month: 'short' })
+  const year = start.getFullYear()
+
+  if (startMonth === endMonth) {
+    return `${startMonth} ${start.getDate()}-${end.getDate()}, ${year}`
+  }
+  return `${startMonth} ${start.getDate()} - ${endMonth} ${end.getDate()}, ${year}`
+}
+
+// Check if period covers the full month
+function isFullMonth(start: Date, end: Date): boolean {
+  const lastDayOfMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate()
+  return start.getDate() === 1 && end.getDate() === lastDayOfMonth
+}
+
 export default function UploadPage() {
   const queryClient = useQueryClient()
   const [isProcessing, setIsProcessing] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error', message: string, details?: string[] } | null>(null)
   const [repId, setRepId] = useState<string | null>(null)
 
-  // Sales Upload State
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
-  const [selectedMonth, setSelectedMonth] = useState<number | null>(null) // Force selection
+  // Sales Upload State - Date Range
+  const today = useMemo(() => new Date(), [])
+  const firstOfMonth = useMemo(() => new Date(today.getFullYear(), today.getMonth(), 1), [today])
+  const [periodStart, setPeriodStart] = useState<Date>(firstOfMonth)
+  const [periodEnd, setPeriodEnd] = useState<Date>(today)
 
   // Preview/Confirmation State
   const [preview, setPreview] = useState<SalesPreview | null>(null)
   const [existingCount, setExistingCount] = useState<number>(0)
+  const [existingPeriod, setExistingPeriod] = useState<{ start: string | null; end: string | null } | null>(null)
   const [showConfirm, setShowConfirm] = useState(false)
+
+  // Validation
+  const isValidDateRange = periodStart <= periodEnd &&
+    periodStart.getMonth() === periodEnd.getMonth() &&
+    periodStart.getFullYear() === periodEnd.getFullYear()
 
   useEffect(() => {
     getRepId().then((id) => {
@@ -78,8 +109,8 @@ export default function UploadPage() {
       return
     }
 
-    if (!selectedMonth) {
-      setStatus({ type: 'error', message: 'Please select a month before uploading.' })
+    if (!isValidDateRange) {
+      setStatus({ type: 'error', message: 'Please select a valid date range within the same month.' })
       return
     }
 
@@ -93,8 +124,9 @@ export default function UploadPage() {
       setPreview(previewData)
 
       // Check for existing records
-      const existing = await checkExistingRecords(repId, selectedYear, selectedMonth)
-      setExistingCount(existing)
+      const existing = await checkExistingRecords(repId, periodStart)
+      setExistingCount(existing.count)
+      setExistingPeriod(existing.existingPeriod)
 
       // Show confirmation dialog
       setShowConfirm(true)
@@ -110,13 +142,13 @@ export default function UploadPage() {
 
   // Step 2: Confirm and commit to database
   const handleConfirmUpload = async () => {
-    if (!repId || !selectedMonth || !preview) return
+    if (!repId || !preview) return
 
     setIsProcessing(true)
     setShowConfirm(false)
 
     try {
-      const result = await commitSalesData(preview.parsedData, repId, selectedYear, selectedMonth)
+      const result = await commitSalesData(preview.parsedData, repId, periodStart, periodEnd)
 
       if (result.errors > 0) {
         setStatus({
@@ -125,12 +157,15 @@ export default function UploadPage() {
           details: result.details
         })
       } else {
+        const periodLabel = isFullMonth(periodStart, periodEnd)
+          ? periodStart.toLocaleString('default', { month: 'long', year: 'numeric' })
+          : formatDateRange(periodStart, periodEnd)
         setStatus({
           type: 'success',
-          message: `Successfully updated product mix for ${result.success} accounts.`
+          message: `Successfully updated product mix for ${result.success} accounts (${periodLabel}).`
         })
       }
-      
+
       queryClient.invalidateQueries({ queryKey: territoryKeys.all })
       queryClient.invalidateQueries({ queryKey: productMixKeys.all })
     } catch (error) {
@@ -149,6 +184,7 @@ export default function UploadPage() {
     setShowConfirm(false)
     setPreview(null)
     setExistingCount(0)
+    setExistingPeriod(null)
   }
 
   // Format currency
@@ -189,56 +225,56 @@ export default function UploadPage() {
 
         {/* Section 2: Monthly Sales */}
         <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4">2. Monthly Sales Data</h2>
+          <h2 className="text-lg font-semibold mb-4">2. Sales Data</h2>
           <p className="text-gray-500 text-sm mb-4">
-            Upload Sales-I monthly report to calculate product mix percentages.
+            Upload Sales-I report for cumulative period. Weekly uploads replace previous data for the month.
           </p>
 
           {/* Prominent Period Display */}
-          <div className={`rounded-lg p-4 mb-4 text-center ${selectedMonth ? 'bg-indigo-50 border-2 border-indigo-300' : 'bg-yellow-50 border-2 border-yellow-400'}`}>
-            {selectedMonth ? (
-              <span className="text-xl font-bold text-indigo-700">
-                {new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' })} {selectedYear}
-              </span>
+          <div className={`rounded-lg p-4 mb-4 text-center ${isValidDateRange ? 'bg-indigo-50 border-2 border-indigo-300' : 'bg-yellow-50 border-2 border-yellow-400'}`}>
+            {isValidDateRange ? (
+              <div>
+                <span className="text-xl font-bold text-indigo-700">
+                  {formatDateRange(periodStart, periodEnd)}
+                </span>
+                {isFullMonth(periodStart, periodEnd) ? (
+                  <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Full Month</span>
+                ) : (
+                  <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded">Partial</span>
+                )}
+              </div>
             ) : (
               <span className="text-lg font-bold text-yellow-700">
-                ⚠️ SELECT MONTH BELOW
+                Dates must be in the same month
               </span>
             )}
           </div>
 
           <div className="flex space-x-4 mb-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-700">Year</label>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-              >
-                <option value={2024}>2024</option>
-                <option value={2025}>2025</option>
-                <option value={2026}>2026</option>
-              </select>
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-gray-700">Start Date</label>
+              <input
+                type="date"
+                value={formatDateForInput(periodStart)}
+                onChange={(e) => setPeriodStart(new Date(e.target.value + 'T00:00:00'))}
+                className="mt-1 block w-full px-3 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700">Month</label>
-              <select
-                value={selectedMonth ?? ''}
-                onChange={(e) => setSelectedMonth(e.target.value ? Number(e.target.value) : null)}
-                className={`mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${!selectedMonth ? 'border-yellow-400 border-2' : ''}`}
-              >
-                <option value="">-- Select Month --</option>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                  <option key={m} value={m}>{new Date(0, m - 1).toLocaleString('default', { month: 'long' })}</option>
-                ))}
-              </select>
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-gray-700">End Date</label>
+              <input
+                type="date"
+                value={formatDateForInput(periodEnd)}
+                onChange={(e) => setPeriodEnd(new Date(e.target.value + 'T00:00:00'))}
+                className="mt-1 block w-full px-3 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              />
             </div>
           </div>
 
           {/* Validation message */}
-          {!selectedMonth && (
+          {!isValidDateRange && (
             <p className="text-yellow-600 text-sm mb-4 font-medium">
-              You must select a month before uploading
+              Start and end dates must be within the same month
             </p>
           )}
 
@@ -251,13 +287,18 @@ export default function UploadPage() {
       </div>
 
       {/* Confirmation Modal */}
-      {showConfirm && preview && selectedMonth && (
+      {showConfirm && preview && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="bg-indigo-600 text-white px-6 py-4 rounded-t-lg">
               <h2 className="text-xl font-bold">
-                Confirm Upload - {new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' })} {selectedYear}
+                Confirm Upload - {formatDateRange(periodStart, periodEnd)}
+                {isFullMonth(periodStart, periodEnd) ? (
+                  <span className="ml-2 text-sm bg-green-500 px-2 py-0.5 rounded">Full Month</span>
+                ) : (
+                  <span className="ml-2 text-sm bg-amber-500 px-2 py-0.5 rounded">Partial</span>
+                )}
               </h2>
             </div>
 
@@ -269,7 +310,11 @@ export default function UploadPage() {
                     ⚠️ WARNING: This will REPLACE {existingCount} existing records
                   </p>
                   <p className="text-red-600 text-sm mt-1">
-                    Data for {new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' })} {selectedYear} already exists and will be overwritten.
+                    {existingPeriod?.start && existingPeriod?.end ? (
+                      <>Existing data covers {existingPeriod.start} to {existingPeriod.end} and will be overwritten.</>
+                    ) : (
+                      <>Data for {periodStart.toLocaleString('default', { month: 'long', year: 'numeric' })} already exists and will be overwritten.</>
+                    )}
                   </p>
                 </div>
               )}

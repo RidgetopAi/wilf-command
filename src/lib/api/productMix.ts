@@ -352,6 +352,8 @@ export async function getTerritoryMonthlyMix(repId: string, year: number): Promi
       sheet_pct: (totals.sheet_sales / totalSales) * 100,
       sheet_orders: 0,
       sheet_qty: 0,
+      period_start: null,
+      period_end: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
