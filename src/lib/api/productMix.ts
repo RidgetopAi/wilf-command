@@ -361,3 +361,92 @@ export async function getTerritoryMonthlyMix(repId: string, year: number): Promi
 
   return result.sort((a, b) => a.month - b.month)
 }
+
+// Interface for dealer sales ranking
+export interface DealerSalesRanking {
+  id: string
+  dealer_name: string
+  account_number: string
+  total_sales: number
+  total_orders: number
+  total_qty: number
+  // Category breakdown
+  adura_sales: number
+  wood_laminate_sales: number
+  sundries_sales: number
+  ns_resp_sales: number
+  sheet_sales: number
+}
+
+// Get all dealers with their YTD sales, sorted by total sales
+export async function getAllDealerSales(repId: string, year: number): Promise<DealerSalesRanking[]> {
+  const supabase = createClient()
+
+  // Get all product mix data for the year
+  const { data: mixData, error: mixError } = await supabase
+    .from('product_mix_monthly')
+    .select('*')
+    .eq('rep_id', repId)
+    .eq('year', year)
+
+  if (mixError) throw mixError
+
+  // Get dealers for names and IDs
+  const { data: dealers, error: dealerError } = await supabase
+    .from('dealers')
+    .select('id, account_number, dealer_name')
+    .eq('rep_id', repId)
+
+  if (dealerError) throw dealerError
+
+  const dealerMap = new Map(dealers?.map(d => [d.account_number, { id: d.id, name: d.dealer_name }]) || [])
+
+  // Aggregate sales by account
+  const accountTotals = new Map<string, {
+    sales: number
+    orders: number
+    qty: number
+    adura: number
+    wood_laminate: number
+    sundries: number
+    ns_resp: number
+    sheet: number
+  }>()
+
+  for (const row of (mixData || [])) {
+    const existing = accountTotals.get(row.account_number) || {
+      sales: 0, orders: 0, qty: 0,
+      adura: 0, wood_laminate: 0, sundries: 0, ns_resp: 0, sheet: 0
+    }
+    accountTotals.set(row.account_number, {
+      sales: existing.sales + (Number(row.total_sales) || 0),
+      orders: existing.orders + (Number(row.total_orders) || 0),
+      qty: existing.qty + (Number(row.total_qty) || 0),
+      adura: existing.adura + (Number(row.adura_sales) || 0),
+      wood_laminate: existing.wood_laminate + (Number(row.wood_laminate_sales) || 0),
+      sundries: existing.sundries + (Number(row.sundries_sales) || 0),
+      ns_resp: existing.ns_resp + (Number(row.ns_resp_sales) || 0),
+      sheet: existing.sheet + (Number(row.sheet_sales) || 0)
+    })
+  }
+
+  // Convert to array and sort by total sales
+  return Array.from(accountTotals.entries())
+    .map(([account_number, totals]) => {
+      const dealer = dealerMap.get(account_number)
+      return {
+        id: dealer?.id || account_number,
+        dealer_name: dealer?.name || account_number,
+        account_number,
+        total_sales: totals.sales,
+        total_orders: totals.orders,
+        total_qty: totals.qty,
+        adura_sales: totals.adura,
+        wood_laminate_sales: totals.wood_laminate,
+        sundries_sales: totals.sundries,
+        ns_resp_sales: totals.ns_resp,
+        sheet_sales: totals.sheet
+      }
+    })
+    .sort((a, b) => b.total_sales - a.total_sales)
+}

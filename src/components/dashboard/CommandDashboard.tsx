@@ -376,13 +376,25 @@ export function CommandDashboard({ repId }: CommandDashboardProps) {
             {overview.topDealers.length === 0 && (
               <p className="px-4 py-3 text-sm text-gray-500 text-center">No dealer data available yet</p>
             )}
+            <a
+              href={`/dealers/sales${year !== currentYear ? `?year=${year}` : ''}`}
+              className="block px-4 py-3 text-center text-sm font-medium text-indigo-600 hover:bg-gray-50"
+            >
+              View All Dealers by Sales →
+            </a>
           </div>
         </MobileCollapsible>
 
         {/* Desktop: Top Dealers */}
         <div className="order-5 hidden sm:block bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h3 className="text-lg font-medium text-gray-900">Top 10 Dealers</h3>
+            <a
+              href={`/dealers/sales${year !== currentYear ? `?year=${year}` : ''}`}
+              className="text-sm text-indigo-600 hover:text-indigo-900 font-medium"
+            >
+              View All →
+            </a>
           </div>
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
