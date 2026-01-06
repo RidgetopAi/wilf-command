@@ -195,7 +195,7 @@ export default function TravelCalendarPage() {
     console.log('handleStopAddNote called with stop:', stop.id, 'note_id:', stop.note_id, 'dealer_id:', stop.dealer_id)
     if (stop.note_id) {
       // Navigate to existing note
-      router.push(`/notes?highlight=${stop.note_id}`)
+      router.push(`/notes?noteId=${stop.note_id}`)
     } else {
       const travelDay = travelDays.find(d => d.stops?.some(s => s.id === stop.id))
       console.log('Found travelDay:', travelDay?.date, 'for stop:', stop.id)
@@ -206,7 +206,7 @@ export default function TravelCalendarPage() {
           const result = await createVisitNote(stop.id, stop.dealer_id, travelDay.date)
           console.log('createVisitNote result:', result)
           if (result.success && result.noteId) {
-            router.push(`/notes?highlight=${result.noteId}`)
+            router.push(`/notes?noteId=${result.noteId}`)
           } else {
             console.error('Failed to create visit note:', result.error)
           }
@@ -216,7 +216,7 @@ export default function TravelCalendarPage() {
           const result = await createEventNote(stop.id, stop.event_title || 'Event', travelDay.date)
           console.log('createEventNote result:', result)
           if (result.success && result.noteId) {
-            router.push(`/notes?highlight=${result.noteId}`)
+            router.push(`/notes?noteId=${result.noteId}`)
           } else {
             console.error('Failed to create event note:', result.error)
           }
