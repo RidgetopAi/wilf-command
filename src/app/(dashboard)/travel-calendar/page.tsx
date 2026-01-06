@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCenter } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import { startOfWeek, endOfWeek, addDays, format } from 'date-fns'
+import { startOfWeek, addDays, format } from 'date-fns'
 import { useRouter } from 'next/navigation'
+import { Users } from 'lucide-react'
 import { 
   CalendarHeader, 
   WeekView, 
@@ -30,10 +31,10 @@ export default function TravelCalendarPage() {
   const [dealers, setDealers] = useState<Dealer[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const [showSidebar, setShowSidebar] = useState(false)
 
   // Calculate week range
   const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate])
-  const weekEnd = useMemo(() => endOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate])
 
   // Load data
   const loadData = useCallback(async () => {
@@ -111,6 +112,12 @@ export default function TravelCalendarPage() {
 
   const handleCreateTerritory = async (name: string) => {
     await createTerritory(name)
+    loadData()
+  }
+
+  const handleAddDealer = async (date: Date, dealerId: string) => {
+    const dateStr = format(date, 'yyyy-MM-dd')
+    await addTravelStop(dateStr, dealerId)
     loadData()
   }
 
@@ -206,32 +213,52 @@ export default function TravelCalendarPage() {
       <div className="h-full flex flex-col">
         {/* Header */}
         <div className="px-4 sm:px-6 lg:px-8 py-4">
-          <CalendarHeader
-            currentDate={currentDate}
-            onDateChange={setCurrentDate}
-            onTodayClick={() => setCurrentDate(new Date())}
-          />
+          <div className="flex items-center justify-between">
+            <CalendarHeader
+              currentDate={currentDate}
+              onDateChange={setCurrentDate}
+              onTodayClick={() => setCurrentDate(new Date())}
+            />
+            {/* Toggle sidebar button - desktop only */}
+            <button
+              onClick={() => setShowSidebar(!showSidebar)}
+              className={`hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md border transition-colors ${
+                showSidebar
+                  ? 'bg-blue-50 border-blue-200 text-blue-700'
+                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Users className="h-4 w-4" />
+              {showSidebar ? 'Hide' : 'Show'} Drag & Drop
+            </button>
+          </div>
         </div>
 
         {/* Main content */}
         <div className="flex-1 flex overflow-hidden px-4 sm:px-6 lg:px-8 pb-4">
-          {/* Week view */}
+          {/* Week view - takes full width when sidebar hidden */}
           <WeekView
             currentDate={currentDate}
             travelDays={travelDays}
             territories={territories}
+            dealers={dealers}
+            scheduledDealerIds={scheduledDealerIds}
             onTerritoryChange={handleTerritoryChange}
             onCreateTerritory={handleCreateTerritory}
+            onAddDealer={handleAddDealer}
             onStopStatusChange={handleStopStatusChange}
             onStopTimeChange={handleStopTimeChange}
             onStopDelete={handleStopDelete}
             onStopAddNote={handleStopAddNote}
+            enableDragDrop={showSidebar}
           />
 
-          {/* Dealer sidebar */}
+          {/* Dealer sidebar - collapsible, desktop only */}
           <DealerSidebar
             dealers={dealers}
             scheduledDealerIds={scheduledDealerIds}
+            isOpen={showSidebar}
+            onToggle={() => setShowSidebar(!showSidebar)}
           />
         </div>
       </div>

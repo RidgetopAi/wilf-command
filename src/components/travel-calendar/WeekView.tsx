@@ -3,30 +3,38 @@
 import { useMemo } from 'react'
 import { startOfWeek, addDays, format } from 'date-fns'
 import { DayColumn } from './DayColumn'
-import type { TravelDay, Territory, TravelStop, TravelStopStatus } from '@/types'
+import type { TravelDay, Territory, TravelStop, TravelStopStatus, Dealer } from '@/types'
 
 interface WeekViewProps {
   currentDate: Date
   travelDays: TravelDay[]
   territories: Territory[]
+  dealers: Dealer[]
+  scheduledDealerIds: Set<string>
   onTerritoryChange: (date: Date, territoryId: string | null) => void
   onCreateTerritory: (name: string) => Promise<void>
+  onAddDealer: (date: Date, dealerId: string) => void
   onStopStatusChange: (stopId: string, status: TravelStopStatus) => void
   onStopTimeChange: (stopId: string, time: string) => void
   onStopDelete: (stopId: string) => void
   onStopAddNote: (stop: TravelStop) => void
+  enableDragDrop?: boolean
 }
 
 export function WeekView({
   currentDate,
   travelDays,
   territories,
+  dealers,
+  scheduledDealerIds,
   onTerritoryChange,
   onCreateTerritory,
+  onAddDealer,
   onStopStatusChange,
   onStopTimeChange,
   onStopDelete,
-  onStopAddNote
+  onStopAddNote,
+  enableDragDrop = false
 }: WeekViewProps) {
   // Get all 5 weekdays (Mon-Fri)
   const weekDays = useMemo(() => {
@@ -53,12 +61,16 @@ export function WeekView({
             date={date}
             travelDay={travelDaysByDate.get(dateStr) || null}
             territories={territories}
+            dealers={dealers}
+            scheduledDealerIds={scheduledDealerIds}
             onTerritoryChange={onTerritoryChange}
             onCreateTerritory={onCreateTerritory}
+            onAddDealer={onAddDealer}
             onStopStatusChange={onStopStatusChange}
             onStopTimeChange={onStopTimeChange}
             onStopDelete={onStopDelete}
             onStopAddNote={onStopAddNote}
+            enableDragDrop={enableDragDrop}
           />
         )
       })}

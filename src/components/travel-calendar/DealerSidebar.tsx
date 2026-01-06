@@ -2,12 +2,14 @@
 
 import { useState, useMemo } from 'react'
 import { useDraggable } from '@dnd-kit/core'
-import { Search, Building2, GripVertical } from 'lucide-react'
+import { Search, Building2, GripVertical, X, ChevronRight } from 'lucide-react'
 import type { Dealer } from '@/types'
 
 interface DealerSidebarProps {
   dealers: Dealer[]
   scheduledDealerIds: Set<string>
+  isOpen: boolean
+  onToggle: () => void
 }
 
 interface DraggableDealerProps {
@@ -18,7 +20,8 @@ interface DraggableDealerProps {
 function DraggableDealer({ dealer, isScheduled }: DraggableDealerProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `dealer-${dealer.id}`,
-    data: { type: 'dealer', dealer }
+    data: { type: 'dealer', dealer },
+    disabled: isScheduled
   })
 
   const style = transform ? {
@@ -61,7 +64,7 @@ function DraggableDealer({ dealer, isScheduled }: DraggableDealerProps) {
   )
 }
 
-export function DealerSidebar({ dealers, scheduledDealerIds }: DealerSidebarProps) {
+export function DealerSidebar({ dealers, scheduledDealerIds, isOpen, onToggle }: DealerSidebarProps) {
   const [search, setSearch] = useState('')
 
   const filteredDealers = useMemo(() => {
@@ -73,14 +76,36 @@ export function DealerSidebar({ dealers, scheduledDealerIds }: DealerSidebarProp
     )
   }, [dealers, search])
 
+  // Collapsed state - just show toggle button
+  if (!isOpen) {
+    return (
+      <button
+        onClick={onToggle}
+        className="hidden sm:flex items-center justify-center w-10 bg-gray-50 border-l border-gray-200 hover:bg-gray-100 transition-colors"
+        title="Show dealer list for drag & drop"
+      >
+        <ChevronRight className="h-5 w-5 text-gray-400 rotate-180" />
+      </button>
+    )
+  }
+
   return (
-    <div className="w-72 bg-gray-50 border-l border-gray-200 flex flex-col h-full">
+    <div className="hidden sm:flex w-72 bg-gray-50 border-l border-gray-200 flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-gray-200 bg-white">
-        <h2 className="font-semibold text-gray-900 flex items-center gap-2 mb-3">
-          <Building2 className="h-4 w-4 text-gray-400" />
-          Dealers
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-gray-400" />
+            Drag & Drop
+          </h2>
+          <button
+            onClick={onToggle}
+            className="p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100"
+            title="Hide sidebar"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
