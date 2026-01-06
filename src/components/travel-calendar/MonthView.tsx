@@ -112,16 +112,34 @@ export function MonthView({ currentDate, travelDays, onDayClick }: MonthViewProp
                     </div>
                   )}
 
-                  {/* Stop indicators */}
-                  <div className="space-y-0.5">
-                    {dealerStops.length > 0 && (
-                      <div className="text-[10px] text-blue-600 font-medium">
-                        {dealerStops.length} dealer{dealerStops.length !== 1 ? 's' : ''}
+                  {/* Stop indicators - show actual names */}
+                  <div className="space-y-0.5 overflow-hidden">
+                    {dealerStops.slice(0, 3).map((stop, idx) => (
+                      <div
+                        key={stop.id || idx}
+                        className="text-[10px] text-blue-600 font-medium truncate leading-tight"
+                        title={stop.dealer?.dealer_name || 'Unknown'}
+                      >
+                        {stop.dealer?.dealer_name || 'Unknown'}
+                      </div>
+                    ))}
+                    {dealerStops.length > 3 && (
+                      <div className="text-[10px] text-blue-400 font-medium">
+                        +{dealerStops.length - 3} more
                       </div>
                     )}
-                    {eventStops.length > 0 && (
-                      <div className="text-[10px] text-purple-600 font-medium">
-                        {eventStops.length} event{eventStops.length !== 1 ? 's' : ''}
+                    {eventStops.slice(0, 2).map((stop, idx) => (
+                      <div
+                        key={stop.id || `evt-${idx}`}
+                        className="text-[10px] text-purple-600 font-medium truncate leading-tight"
+                        title={stop.event_title || 'Event'}
+                      >
+                        {stop.event_title || 'Event'}
+                      </div>
+                    ))}
+                    {eventStops.length > 2 && (
+                      <div className="text-[10px] text-purple-400 font-medium">
+                        +{eventStops.length - 2} more
                       </div>
                     )}
                   </div>
