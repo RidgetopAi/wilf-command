@@ -54,6 +54,9 @@ export default async function DashboardLayout({
                 <Link href="/notes" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Notes
                 </Link>
+                <Link href="/stopsheet" className="border-transparent text-emerald-600 hover:border-emerald-300 hover:text-emerald-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  StopSheet
+                </Link>
                 <Link href="/upload" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Upload
                 </Link>
