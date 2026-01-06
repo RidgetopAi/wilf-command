@@ -266,7 +266,7 @@ export async function createEventNote(
     .insert({
       dealer_id: null,
       travel_stop_id: stopId,
-      type: 'other',
+      type: 'personal',
       title: eventTitle,
       body: '',
       visit_date: date
