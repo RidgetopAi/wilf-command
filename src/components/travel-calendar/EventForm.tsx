@@ -38,6 +38,7 @@ export function EventForm({ dateLabel, onSave, onClose }: EventFormProps) {
       end_time: isAllDay ? undefined : endTime || undefined,
       location: location.trim() || undefined
     })
+    onClose()
   }
 
   // Filter out dealer_visit from event types (that's for dealer selection)

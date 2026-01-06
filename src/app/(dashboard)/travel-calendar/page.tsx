@@ -3,12 +3,14 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCenter } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
-import { startOfWeek, addDays, format } from 'date-fns'
+import { startOfWeek, startOfMonth, endOfMonth, addDays, format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { Users } from 'lucide-react'
 import { 
-  CalendarHeader, 
-  WeekView, 
+  CalendarHeader,
+  type CalendarView,
+  WeekView,
+  MonthView,
   DealerSidebar 
 } from '@/components/travel-calendar'
 import { createClient } from '@/lib/supabase/client'
@@ -33,17 +35,26 @@ export default function TravelCalendarPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
   const [showSidebar, setShowSidebar] = useState(false)
+  const [view, setView] = useState<CalendarView>('week')
 
-  // Calculate week range
+  // Calculate date ranges
   const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate])
+  const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate])
+  const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate])
 
   // Load data
   const loadData = useCallback(async () => {
     const supabase = createClient()
-    const startStr = format(weekStart, 'yyyy-MM-dd')
-    const endStr = format(addDays(weekStart, 4), 'yyyy-MM-dd') // Mon-Fri only
+    
+    // Determine date range based on view
+    const startStr = view === 'week' 
+      ? format(weekStart, 'yyyy-MM-dd')
+      : format(monthStart, 'yyyy-MM-dd')
+    const endStr = view === 'week'
+      ? format(addDays(weekStart, 4), 'yyyy-MM-dd') // Mon-Fri only
+      : format(monthEnd, 'yyyy-MM-dd')
 
-    // Fetch travel days for this week
+    // Fetch travel days for the range
     const { data: travelData } = await supabase
       .from('travel_days')
       .select(`
@@ -87,7 +98,7 @@ export default function TravelCalendarPage() {
     }
 
     setIsLoading(false)
-  }, [weekStart])
+  }, [view, weekStart, monthStart, monthEnd])
 
   useEffect(() => {
     loadData()
@@ -244,51 +255,69 @@ export default function TravelCalendarPage() {
           <div className="flex items-center justify-between">
             <CalendarHeader
               currentDate={currentDate}
+              view={view}
               onDateChange={setCurrentDate}
+              onViewChange={setView}
               onTodayClick={() => setCurrentDate(new Date())}
             />
-            {/* Toggle sidebar button - desktop only */}
-            <button
-              onClick={() => setShowSidebar(!showSidebar)}
-              className={`hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md border transition-colors ${
-                showSidebar
-                  ? 'bg-blue-50 border-blue-200 text-blue-700'
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <Users className="h-4 w-4" />
-              {showSidebar ? 'Hide' : 'Show'} Drag & Drop
-            </button>
+            {/* Toggle sidebar button - desktop only, week view only */}
+            {view === 'week' && (
+              <button
+                onClick={() => setShowSidebar(!showSidebar)}
+                className={`hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md border transition-colors ${
+                  showSidebar
+                    ? 'bg-blue-50 border-blue-200 text-blue-700'
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Users className="h-4 w-4" />
+                {showSidebar ? 'Hide' : 'Show'} Drag & Drop
+              </button>
+            )}
           </div>
         </div>
 
         {/* Main content */}
         <div className="flex-1 flex overflow-hidden px-4 sm:px-6 lg:px-8 pb-4">
-          {/* Week view - takes full width when sidebar hidden */}
-          <WeekView
-            currentDate={currentDate}
-            travelDays={travelDays}
-            territories={territories}
-            dealers={dealers}
-            scheduledDealerIds={scheduledDealerIds}
-            onTerritoryChange={handleTerritoryChange}
-            onCreateTerritory={handleCreateTerritory}
-            onAddDealer={handleAddDealer}
-            onAddEvent={handleAddEvent}
-            onStopStatusChange={handleStopStatusChange}
-            onStopTimeChange={handleStopTimeChange}
-            onStopDelete={handleStopDelete}
-            onStopAddNote={handleStopAddNote}
-            enableDragDrop={showSidebar}
-          />
+          {view === 'week' ? (
+            <>
+              {/* Week view - takes full width when sidebar hidden */}
+              <WeekView
+                currentDate={currentDate}
+                travelDays={travelDays}
+                territories={territories}
+                dealers={dealers}
+                scheduledDealerIds={scheduledDealerIds}
+                onTerritoryChange={handleTerritoryChange}
+                onCreateTerritory={handleCreateTerritory}
+                onAddDealer={handleAddDealer}
+                onAddEvent={handleAddEvent}
+                onStopStatusChange={handleStopStatusChange}
+                onStopTimeChange={handleStopTimeChange}
+                onStopDelete={handleStopDelete}
+                onStopAddNote={handleStopAddNote}
+                enableDragDrop={showSidebar}
+              />
 
-          {/* Dealer sidebar - collapsible, desktop only */}
-          <DealerSidebar
-            dealers={dealers}
-            scheduledDealerIds={scheduledDealerIds}
-            isOpen={showSidebar}
-            onToggle={() => setShowSidebar(!showSidebar)}
-          />
+              {/* Dealer sidebar - collapsible, desktop only */}
+              <DealerSidebar
+                dealers={dealers}
+                scheduledDealerIds={scheduledDealerIds}
+                isOpen={showSidebar}
+                onToggle={() => setShowSidebar(!showSidebar)}
+              />
+            </>
+          ) : (
+            /* Month view - click a day to switch to week view for that week */
+            <MonthView
+              currentDate={currentDate}
+              travelDays={travelDays}
+              onDayClick={(date) => {
+                setCurrentDate(date)
+                setView('week')
+              }}
+            />
+          )}
         </div>
       </div>
 
