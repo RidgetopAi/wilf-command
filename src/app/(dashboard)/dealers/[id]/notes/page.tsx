@@ -324,6 +324,7 @@ export default function NotesPage({ params }: NotesPageProps) {
       {/* Note Form Modal */}
       {showNoteForm && (
         <NoteForm
+          key={editingNote?.id ?? 'new'}
           dealerId={dealerId}
           note={editingNote || undefined}
           tags={tags}
