@@ -20,11 +20,20 @@ interface DealerOption {
   account_number: string
 }
 
+interface EventOption {
+  id: string
+  title: string
+  date: string
+  event_type: string
+  dealer_name?: string
+}
+
 export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([])
   const [filteredNotes, setFilteredNotes] = useState<Note[]>([])
   const [tags, setTags] = useState<Tag[]>([])
   const [dealers, setDealers] = useState<DealerOption[]>([])
+  const [events, setEvents] = useState<EventOption[]>([])
   const [isLoading, setIsLoading] = useState(true)
   
   const [showNoteForm, setShowNoteForm] = useState(false)
@@ -77,6 +86,40 @@ export default function NotesPage() {
       
       if (dealersData) {
         setDealers(dealersData as DealerOption[])
+      }
+
+      // Fetch upcoming events for linking
+      const today = new Date().toISOString().split('T')[0]
+      const futureDate = new Date()
+      futureDate.setDate(futureDate.getDate() + 60) // 60 days ahead
+      const futureDateStr = futureDate.toISOString().split('T')[0]
+
+      const { data: eventsData } = await supabase
+        .from('travel_stops')
+        .select(`
+          id,
+          event_title,
+          event_type,
+          dealer:dealers(dealer_name),
+          travel_day:travel_days!inner(date)
+        `)
+        .gte('travel_days.date', today)
+        .lte('travel_days.date', futureDateStr)
+        .order('travel_days(date)', { ascending: true })
+      
+      if (eventsData) {
+        const transformedEvents = eventsData
+          .filter((e): e is typeof e & { travel_day: { date: string } } => 
+            e.travel_day !== null && typeof e.travel_day === 'object' && 'date' in e.travel_day
+          )
+          .map(stop => ({
+            id: stop.id,
+            title: stop.event_title || (stop.dealer as { dealer_name?: string })?.dealer_name || 'Untitled',
+            date: stop.travel_day.date,
+            event_type: stop.event_type,
+            dealer_name: (stop.dealer as { dealer_name?: string })?.dealer_name
+          }))
+        setEvents(transformedEvents)
       }
       
       setIsLoading(false)
@@ -307,6 +350,7 @@ export default function NotesPage() {
           note={editingNote || undefined}
           tags={tags}
           dealers={dealers}
+          events={events}
           onSave={handleSaveNote}
           onCancel={handleCancelNote}
           onTagCreate={handleCreateTag}

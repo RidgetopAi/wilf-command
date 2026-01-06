@@ -21,6 +21,10 @@ export async function getNotes(
     query = query.eq('dealer_id', filter.dealerId)
   }
 
+  if (filter.travelStopId) {
+    query = query.eq('travel_stop_id', filter.travelStopId)
+  }
+
   if (filter.type) {
     query = query.eq('type', filter.type)
   }
@@ -97,6 +101,11 @@ export async function getNote(id: string): Promise<Note | null> {
 
 export async function getDealerNotes(dealerId: string): Promise<Note[]> {
   const { notes } = await getNotes({ dealerId }, 1, 100)
+  return notes
+}
+
+export async function getEventNotes(travelStopId: string): Promise<Note[]> {
+  const { notes } = await getNotes({ travelStopId }, 1, 100)
   return notes
 }
 

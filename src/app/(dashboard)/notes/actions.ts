@@ -8,6 +8,7 @@ export async function createNote(formData: FormData): Promise<{ success: boolean
   const supabase = await createClient()
 
   const dealerId = formData.get('dealer_id') as string || null
+  const travelStopId = formData.get('travel_stop_id') as string || null
   const type = formData.get('type') as NoteType
   const title = formData.get('title') as string || null
   const body = formData.get('body') as string
@@ -23,6 +24,7 @@ export async function createNote(formData: FormData): Promise<{ success: boolean
     .from('notes')
     .insert({
       dealer_id: dealerId || null,
+      travel_stop_id: travelStopId || null,
       type: type || 'visit',
       title: title?.trim() || null,
       body: body.trim(),
@@ -64,6 +66,9 @@ export async function createNote(formData: FormData): Promise<{ success: boolean
     revalidatePath(`/dealers/${dealerId}/notes`)
     revalidatePath(`/dealers/${dealerId}`)
   }
+  if (travelStopId) {
+    revalidatePath('/travel-calendar')
+  }
 
   return { success: true, noteId: note.id }
 }
@@ -72,6 +77,7 @@ export async function updateNote(noteId: string, formData: FormData): Promise<{ 
   const supabase = await createClient()
 
   const dealerId = formData.get('dealer_id') as string || null
+  const travelStopId = formData.get('travel_stop_id') as string || null
   const type = formData.get('type') as NoteType
   const title = formData.get('title') as string || null
   const body = formData.get('body') as string
@@ -87,6 +93,7 @@ export async function updateNote(noteId: string, formData: FormData): Promise<{ 
     .from('notes')
     .update({
       dealer_id: dealerId || null,
+      travel_stop_id: travelStopId || null,
       type,
       title: title?.trim() || null,
       body: body.trim(),

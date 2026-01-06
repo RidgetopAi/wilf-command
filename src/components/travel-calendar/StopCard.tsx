@@ -115,15 +115,13 @@ export function StopCard({ stop, onStatusChange, onTimeChange, onDelete, onAddNo
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
                   <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[140px]">
-                    {!isEvent && (
-                      <button
-                        onClick={() => { onAddNote(); setShowMenu(false) }}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <FileText className="h-4 w-4" />
-                        {stop.note_id ? 'View Note' : 'Add Note'}
-                      </button>
-                    )}
+                    <button
+                      onClick={() => { onAddNote(); setShowMenu(false) }}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <FileText className="h-4 w-4" />
+                      {stop.note_id ? 'View Note' : 'Add Note'}
+                    </button>
                     <div className="border-t border-gray-100 my-1" />
                     <button
                       onClick={() => { onStatusChange('completed'); setShowMenu(false) }}

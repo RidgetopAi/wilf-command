@@ -227,7 +227,47 @@ export async function createVisitNote(
     .from('notes')
     .insert({
       dealer_id: dealerId,
+      travel_stop_id: stopId,
       type: 'visit',
+      body: '',
+      visit_date: date
+    })
+    .select()
+    .single()
+
+  if (noteError) {
+    return { success: false, error: noteError.message }
+  }
+
+  // Link note to stop
+  const { error: stopError } = await supabase
+    .from('travel_stops')
+    .update({ note_id: note.id, updated_at: new Date().toISOString() })
+    .eq('id', stopId)
+
+  if (stopError) {
+    return { success: false, error: stopError.message }
+  }
+
+  revalidatePath('/travel-calendar')
+  return { success: true, noteId: note.id }
+}
+
+export async function createEventNote(
+  stopId: string,
+  eventTitle: string,
+  date: string
+) {
+  const supabase = await createClient()
+
+  // Create an event note (no dealer, linked to the event)
+  const { data: note, error: noteError } = await supabase
+    .from('notes')
+    .insert({
+      dealer_id: null,
+      travel_stop_id: stopId,
+      type: 'other',
+      title: eventTitle,
       body: '',
       visit_date: date
     })

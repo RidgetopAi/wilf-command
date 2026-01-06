@@ -50,6 +50,7 @@ import {
   deleteTravelStop,
   reorderStops,
   createVisitNote,
+  createEventNote,
   addCalendarEvent
 } from './actions'
 
@@ -194,13 +195,21 @@ export default function TravelCalendarPage() {
     if (stop.note_id) {
       // Navigate to existing note
       router.push(`/notes?highlight=${stop.note_id}`)
-    } else if (stop.dealer_id) {
-      // Create new note and navigate (only for dealer visits)
+    } else {
       const travelDay = travelDays.find(d => d.stops?.some(s => s.id === stop.id))
       if (travelDay) {
-        const result = await createVisitNote(stop.id, stop.dealer_id, travelDay.date)
-        if (result.success && result.noteId) {
-          router.push(`/notes?highlight=${result.noteId}`)
+        if (stop.dealer_id) {
+          // Create dealer visit note
+          const result = await createVisitNote(stop.id, stop.dealer_id, travelDay.date)
+          if (result.success && result.noteId) {
+            router.push(`/notes?highlight=${result.noteId}`)
+          }
+        } else {
+          // Create event note (no dealer)
+          const result = await createEventNote(stop.id, stop.event_title || 'Event', travelDay.date)
+          if (result.success && result.noteId) {
+            router.push(`/notes?highlight=${result.noteId}`)
+          }
         }
       }
     }

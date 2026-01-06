@@ -188,6 +188,7 @@ export const NOTE_TYPE_LABELS: Record<NoteType, string> = {
 export interface Note {
   id: string
   dealer_id: string | null
+  travel_stop_id: string | null
   type: NoteType
   title: string | null
   body: string
@@ -202,6 +203,7 @@ export interface Note {
   tags?: Tag[]
   attachments?: NoteAttachment[]
   dealer?: Dealer
+  travel_stop?: TravelStop
 }
 
 export interface NoteAttachment {
@@ -262,6 +264,7 @@ export interface NoteEmail {
 // Filter/Input types
 export interface NotesFilter {
   dealerId?: string
+  travelStopId?: string
   type?: NoteType
   tagIds?: string[]
   startDate?: string
@@ -271,6 +274,7 @@ export interface NotesFilter {
 
 export interface CreateNoteInput {
   dealer_id?: string | null
+  travel_stop_id?: string | null
   type: NoteType
   title?: string
   body: string
@@ -285,6 +289,7 @@ export interface UpdateNoteInput {
   body?: string
   visit_date?: string
   follow_up_date?: string
+  travel_stop_id?: string | null
   tag_ids?: string[]
 }
 

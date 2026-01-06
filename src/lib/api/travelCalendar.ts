@@ -280,3 +280,55 @@ export async function reorderTravelStops(
 
   return true
 }
+
+// =============================================
+// EVENT QUERIES FOR NOTE LINKING
+// =============================================
+
+export interface EventOption {
+  id: string
+  title: string
+  date: string
+  event_type: string
+  dealer_name?: string
+}
+
+export async function getUpcomingEvents(days: number = 30): Promise<EventOption[]> {
+  const supabase = await createClient()
+
+  const today = new Date().toISOString().split('T')[0]
+  const futureDate = new Date()
+  futureDate.setDate(futureDate.getDate() + days)
+  const futureDateStr = futureDate.toISOString().split('T')[0]
+
+  const { data, error } = await supabase
+    .from('travel_stops')
+    .select(`
+      id,
+      event_title,
+      event_type,
+      scheduled_time,
+      dealer:dealers(dealer_name),
+      travel_day:travel_days!inner(date)
+    `)
+    .gte('travel_days.date', today)
+    .lte('travel_days.date', futureDateStr)
+    .order('travel_days(date)', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching upcoming events:', error)
+    return []
+  }
+
+  return (data || [])
+    .filter((stop): stop is typeof stop & { travel_day: { date: string } } => 
+      stop.travel_day !== null && typeof stop.travel_day === 'object' && 'date' in stop.travel_day
+    )
+    .map(stop => ({
+      id: stop.id,
+      title: stop.event_title || (stop.dealer as { dealer_name?: string })?.dealer_name || 'Untitled',
+      date: stop.travel_day.date,
+      event_type: stop.event_type,
+      dealer_name: (stop.dealer as { dealer_name?: string })?.dealer_name
+    }))
+}

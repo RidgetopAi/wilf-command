@@ -6,7 +6,7 @@ import { NoteTypeSelector } from './NoteTypeSelector'
 import { TagPicker } from './TagPicker'
 import { AttachmentUploader, PendingAttachment } from './AttachmentUploader'
 import { AttachmentPreview } from './AttachmentPreview'
-import { X, Calendar, Save, Loader2, Store, ChevronDown } from 'lucide-react'
+import { X, Calendar, Save, Loader2, Store, ChevronDown, CalendarDays } from 'lucide-react'
 
 interface UploadedAttachment {
   storagePath: string
@@ -21,11 +21,21 @@ interface DealerOption {
   account_number: string
 }
 
+interface EventOption {
+  id: string
+  title: string
+  date: string
+  event_type: string
+  dealer_name?: string
+}
+
 interface NoteFormProps {
   dealerId?: string | null
+  travelStopId?: string | null
   note?: Note
   tags: Tag[]
   dealers?: DealerOption[]
+  events?: EventOption[]
   onSave: (formData: FormData) => Promise<{ success: boolean; error?: string; noteId?: string }>
   onCancel: () => void
   onTagCreate?: (name: string) => Promise<Tag | null>
@@ -35,9 +45,11 @@ interface NoteFormProps {
 
 export function NoteForm({ 
   dealerId: initialDealerId, 
+  travelStopId: initialTravelStopId,
   note, 
   tags, 
   dealers,
+  events,
   onSave, 
   onCancel,
   onTagCreate,
@@ -49,6 +61,9 @@ export function NoteForm({
   
   const [selectedDealerId, setSelectedDealerId] = useState<string | null>(
     note?.dealer_id || initialDealerId || null
+  )
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(
+    note?.travel_stop_id || initialTravelStopId || null
   )
   const [type, setType] = useState<NoteType>(note?.type || 'visit')
   const [title, setTitle] = useState(note?.title || '')
@@ -92,6 +107,9 @@ export function NoteForm({
     formData.set('tag_ids', JSON.stringify(selectedTagIds))
     if (selectedDealerId) {
       formData.set('dealer_id', selectedDealerId)
+    }
+    if (selectedEventId) {
+      formData.set('travel_stop_id', selectedEventId)
     }
     
     // Include pending attachment info for the server to create records
@@ -185,6 +203,32 @@ export function NoteForm({
                     {dealers.map(dealer => (
                       <option key={dealer.id} value={dealer.id}>
                         {dealer.dealer_name} (#{dealer.account_number})
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+            )}
+
+            {/* Event Picker (only shown when events list is provided) */}
+            {events && events.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <CalendarDays className="w-4 h-4 inline mr-1" />
+                  Link to Event <span className="text-gray-400">(optional)</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedEventId || ''}
+                    onChange={e => setSelectedEventId(e.target.value || null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white pr-10"
+                  >
+                    <option value="">No event linked</option>
+                    {events.map(event => (
+                      <option key={event.id} value={event.id}>
+                        {event.title} - {new Date(event.date).toLocaleDateString()}
+                        {event.dealer_name ? ` (${event.dealer_name})` : ''}
                       </option>
                     ))}
                   </select>
