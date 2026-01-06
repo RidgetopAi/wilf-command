@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { Note, NoteType, Tag, NoteAttachment, Dealer } from '@/types'
 import { NoteTypeSelector } from './NoteTypeSelector'
 import { TagPicker } from './TagPicker'
@@ -75,7 +75,23 @@ export function NoteForm({
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
     note?.tags?.map(t => t.id) || []
   )
-  
+
+  // Reset form state when switching between edit/new mode
+  useEffect(() => {
+    setSelectedTagIds(note?.tags?.map(t => t.id) || [])
+    setType(note?.type || 'visit')
+    setTitle(note?.title || '')
+    setBody(note?.body || '')
+    setVisitDate(note?.visit_date || new Date().toISOString().split('T')[0])
+    setFollowUpDate(note?.follow_up_date || '')
+    setSelectedDealerId(note?.dealer_id || initialDealerId || null)
+    setSelectedEventId(note?.travel_stop_id || initialTravelStopId || null)
+    setExistingAttachments(note?.attachments || [])
+    setUploadedAttachments([])
+    setPendingAttachments([])
+    setError(null)
+  }, [note?.id])
+
   // Attachments state
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([])
   const [uploadedAttachments, setUploadedAttachments] = useState<UploadedAttachment[]>([])
