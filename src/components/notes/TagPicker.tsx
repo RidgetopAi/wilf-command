@@ -12,7 +12,6 @@ interface TagPickerProps {
 }
 
 export function TagPicker({ tags, selectedIds, onToggle, onCreate }: TagPickerProps) {
-  console.log('TagPicker render - selectedIds:', selectedIds)
   const [isAdding, setIsAdding] = useState(false)
   const [newTagName, setNewTagName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
@@ -50,10 +49,7 @@ export function TagPicker({ tags, selectedIds, onToggle, onCreate }: TagPickerPr
             <button
               key={tag.id}
               type="button"
-              onClick={() => {
-                console.log('Tag clicked:', tag.id, tag.name)
-                onToggle(tag.id)
-              }}
+              onClick={() => onToggle(tag.id)}
               className={`
                 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm transition-colors
                 ${isSelected
