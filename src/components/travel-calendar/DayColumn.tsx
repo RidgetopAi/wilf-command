@@ -85,12 +85,34 @@ export function DayColumn({
   // Check if we're on mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
+  const selectedTerritory = territories.find(t => t.id === travelDay?.territory_id)
+
   return (
     <div
       className={`flex-1 min-w-0 border-r border-gray-200 last:border-r-0 flex flex-col ${
         today ? 'bg-blue-50/50' : ''
       }`}
     >
+      {/* Territory banner - shows when territory is set */}
+      {selectedTerritory ? (
+        <div 
+          className="px-2 py-1.5 text-center cursor-pointer hover:opacity-80 transition-opacity"
+          style={{ 
+            backgroundColor: selectedTerritory.color,
+            color: '#fff'
+          }}
+          onClick={() => {
+            // Find and click the territory selector to open it
+            const selector = document.getElementById(`territory-selector-${dateStr}`)
+            selector?.click()
+          }}
+        >
+          <span className="text-xs font-semibold uppercase tracking-wide drop-shadow-sm">
+            {selectedTerritory.name}
+          </span>
+        </div>
+      ) : null}
+
       {/* Day header */}
       <div className={`p-2 sm:p-3 border-b border-gray-200 ${today ? 'bg-blue-100/50' : 'bg-gray-50'}`}>
         <div className="flex items-center justify-between mb-1">
@@ -110,6 +132,7 @@ export function DayColumn({
         {/* Territory selector */}
         <div className="mt-2">
           <TerritorySelector
+            id={`territory-selector-${dateStr}`}
             territories={territories}
             selectedId={travelDay?.territory_id || null}
             onSelect={(id) => onTerritoryChange(date, id)}

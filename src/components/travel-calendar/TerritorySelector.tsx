@@ -5,6 +5,7 @@ import { MapPin, Plus, Check } from 'lucide-react'
 import type { Territory } from '@/types'
 
 interface TerritorySelectorProps {
+  id?: string
   territories: Territory[]
   selectedId: string | null
   onSelect: (territoryId: string | null) => void
@@ -12,6 +13,7 @@ interface TerritorySelectorProps {
 }
 
 export function TerritorySelector({ 
+  id,
   territories, 
   selectedId, 
   onSelect,
@@ -40,6 +42,7 @@ export function TerritorySelector({
   return (
     <div className="relative">
       <button
+        id={id}
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded-md border transition-colors"
         style={{
