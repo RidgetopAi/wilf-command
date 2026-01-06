@@ -182,13 +182,25 @@ export default function TravelCalendarPage() {
     const activeId = active.id as string
     const overId = over.id as string
 
-    // Dealer dropped on a day
-    if (activeId.startsWith('dealer-') && overId.startsWith('day-')) {
+    // Dealer being dropped
+    if (activeId.startsWith('dealer-')) {
       const dealerId = activeId.replace('dealer-', '')
-      const dateStr = overId.replace('day-', '')
-      await addTravelStop(dateStr, dealerId)
-      loadData()
-      return
+      
+      // Dropped on a day column
+      if (overId.startsWith('day-')) {
+        const dateStr = overId.replace('day-', '')
+        await addTravelStop(dateStr, dealerId)
+        loadData()
+        return
+      }
+      
+      // Dropped on a stop card - find which day that stop belongs to
+      const targetDay = travelDays.find(d => d.stops?.some(s => s.id === overId))
+      if (targetDay) {
+        await addTravelStop(targetDay.date, dealerId)
+        loadData()
+        return
+      }
     }
 
     // Stop reordering within same day
