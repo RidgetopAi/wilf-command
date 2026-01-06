@@ -287,3 +287,62 @@ export interface UpdateNoteInput {
   follow_up_date?: string
   tag_ids?: string[]
 }
+
+// =============================================
+// TRAVEL CALENDAR TYPES
+// =============================================
+
+export interface Territory {
+  id: string
+  rep_id: string
+  name: string
+  color: string
+  created_at: string
+}
+
+export interface TravelDay {
+  id: string
+  rep_id: string
+  date: string
+  territory_id: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  // Joined data
+  territory?: Territory
+  stops?: TravelStop[]
+}
+
+export type TravelStopStatus = 'planned' | 'completed' | 'cancelled' | 'rescheduled'
+
+export interface TravelStop {
+  id: string
+  travel_day_id: string
+  dealer_id: string
+  scheduled_time: string | null
+  duration_minutes: number
+  sort_order: number
+  status: TravelStopStatus
+  note_id: string | null
+  created_at: string
+  updated_at: string
+  // Joined data
+  dealer?: Dealer
+  note?: Note
+}
+
+export interface CreateTravelStopInput {
+  travel_day_id: string
+  dealer_id: string
+  scheduled_time?: string
+  duration_minutes?: number
+  sort_order?: number
+}
+
+export interface UpdateTravelStopInput {
+  scheduled_time?: string
+  duration_minutes?: number
+  sort_order?: number
+  status?: TravelStopStatus
+  note_id?: string
+}
