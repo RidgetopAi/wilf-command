@@ -227,7 +227,7 @@ export function NoteForm({
                     <option value="">No event linked</option>
                     {events.map(event => (
                       <option key={event.id} value={event.id}>
-                        {event.title} - {new Date(event.date).toLocaleDateString()}
+                        {event.title} - {event.date}
                         {event.dealer_name ? ` (${event.dealer_name})` : ''}
                       </option>
                     ))}
