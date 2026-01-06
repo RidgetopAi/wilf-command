@@ -192,15 +192,19 @@ export default function TravelCalendarPage() {
   }
 
   const handleStopAddNote = async (stop: TravelStop) => {
+    console.log('handleStopAddNote called with stop:', stop.id, 'note_id:', stop.note_id, 'dealer_id:', stop.dealer_id)
     if (stop.note_id) {
       // Navigate to existing note
       router.push(`/notes?highlight=${stop.note_id}`)
     } else {
       const travelDay = travelDays.find(d => d.stops?.some(s => s.id === stop.id))
+      console.log('Found travelDay:', travelDay?.date, 'for stop:', stop.id)
       if (travelDay) {
         if (stop.dealer_id) {
           // Create dealer visit note
+          console.log('Creating dealer visit note...')
           const result = await createVisitNote(stop.id, stop.dealer_id, travelDay.date)
+          console.log('createVisitNote result:', result)
           if (result.success && result.noteId) {
             router.push(`/notes?highlight=${result.noteId}`)
           } else {
@@ -208,7 +212,9 @@ export default function TravelCalendarPage() {
           }
         } else {
           // Create event note (no dealer)
+          console.log('Creating event note...', stop.event_title)
           const result = await createEventNote(stop.id, stop.event_title || 'Event', travelDay.date)
+          console.log('createEventNote result:', result)
           if (result.success && result.noteId) {
             router.push(`/notes?highlight=${result.noteId}`)
           } else {
@@ -216,7 +222,7 @@ export default function TravelCalendarPage() {
           }
         }
       } else {
-        console.error('Could not find travel day for stop:', stop.id)
+        console.error('Could not find travel day for stop:', stop.id, 'Available days:', travelDays.map(d => ({ date: d.date, stopIds: d.stops?.map(s => s.id) })))
       }
     }
   }
