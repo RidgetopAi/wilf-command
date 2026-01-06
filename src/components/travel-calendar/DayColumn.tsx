@@ -144,7 +144,7 @@ export function DayColumn({
       {/* Stops area */}
       <div
         ref={enableDragDrop ? setNodeRef : undefined}
-        className={`flex-1 p-2 space-y-2 min-h-[120px] sm:min-h-[200px] transition-colors overflow-y-auto ${
+        className={`flex-1 p-2 space-y-2 min-h-[250px] sm:min-h-[400px] transition-colors overflow-y-auto ${
           isOver ? 'bg-blue-100/50 ring-2 ring-inset ring-blue-300' : ''
         }`}
       >
@@ -175,34 +175,43 @@ export function DayColumn({
             <span className="hidden sm:inline">Add</span>
           </button>
 
-          {/* Add menu dropdown */}
-          {showAddMenu && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowAddMenu(false)} />
-              <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px]">
-                <button
-                  onClick={() => {
-                    setShowAddMenu(false)
-                    setShowDealerSearch(true)
+          {/* Add menu dropdown - fixed positioning to escape scroll container */}
+          {showAddMenu && addButtonRef.current && (() => {
+            const rect = addButtonRef.current.getBoundingClientRect()
+            return (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowAddMenu(false)} />
+                <div
+                  className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px]"
+                  style={{
+                    top: rect.bottom + 4,
+                    left: rect.left
                   }}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
                 >
-                  <Store className="h-4 w-4 text-blue-500" />
-                  Add Dealer Visit
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAddMenu(false)
-                    setShowEventForm(true)
-                  }}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <Calendar className="h-4 w-4 text-purple-500" />
-                  Add Event
-                </button>
-              </div>
-            </>
-          )}
+                  <button
+                    onClick={() => {
+                      setShowAddMenu(false)
+                      setShowDealerSearch(true)
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Store className="h-4 w-4 text-blue-500" />
+                    Add Dealer Visit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAddMenu(false)
+                      setShowEventForm(true)
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Calendar className="h-4 w-4 text-purple-500" />
+                    Add Event
+                  </button>
+                </div>
+              </>
+            )
+          })()}
 
           {/* Desktop dealer popover */}
           {showDealerSearch && !isMobile && (
