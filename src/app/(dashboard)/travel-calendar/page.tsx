@@ -32,7 +32,8 @@ const customCollisionDetection: CollisionDetection = (args) => {
 }
 import { startOfWeek, startOfMonth, endOfMonth, addDays, format } from 'date-fns'
 import { useRouter } from 'next/navigation'
-import { Users } from 'lucide-react'
+import { Users, ClipboardCheck } from 'lucide-react'
+import Link from 'next/link'
 import { 
   CalendarHeader,
   type CalendarView,
@@ -368,6 +369,15 @@ export default function TravelCalendarPage() {
           )}
         </div>
       </div>
+
+      {/* Floating StopSheet Button */}
+      <Link
+        href="/stopsheet/new"
+        className="fixed bottom-6 right-6 flex items-center gap-2 px-5 py-3 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 transition-all z-30"
+      >
+        <ClipboardCheck className="h-5 w-5" />
+        <span className="font-medium">StopSheet</span>
+      </Link>
 
       {/* Drag overlay for visual feedback */}
       <DragOverlay>

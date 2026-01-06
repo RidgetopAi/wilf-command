@@ -373,3 +373,48 @@ export interface UpdateTravelStopInput {
   status?: TravelStopStatus
   note_id?: string
 }
+
+// =============================================
+// STOPSHEET TYPES
+// =============================================
+
+export type StopSheetSection = 'basics' | 'objectives'
+export type StopSheetStatus = 'in_progress' | 'completed'
+
+export interface StopSheetTemplate {
+  id: string
+  rep_id: string
+  section: StopSheetSection
+  label: string
+  sort_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface StopSheet {
+  id: string
+  rep_id: string
+  dealer_id: string
+  visit_date: string
+  travel_stop_id: string | null
+  status: StopSheetStatus
+  notes: string | null
+  created_at: string
+  updated_at: string
+  // Joined data
+  dealer?: Dealer
+  items?: StopSheetItem[]
+}
+
+export interface StopSheetItem {
+  id: string
+  stopsheet_id: string
+  template_item_id: string | null
+  section: StopSheetSection
+  label: string
+  is_checked: boolean
+  notes: string | null
+  sort_order: number
+  created_at: string
+}
