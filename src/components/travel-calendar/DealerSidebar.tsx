@@ -24,32 +24,34 @@ function DraggableDealer({ dealer, isScheduled }: DraggableDealerProps) {
     disabled: isScheduled
   })
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    zIndex: 50
-  } : undefined
+  const style: React.CSSProperties = {
+    ...(transform ? {
+      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      zIndex: 50
+    } : {}),
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+    touchAction: 'none'
+  }
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 p-2 rounded-lg border transition-all ${
+      {...attributes}
+      {...listeners}
+      className={`flex items-center gap-2 p-2 rounded-lg border transition-all select-none ${
         isDragging 
-          ? 'bg-blue-50 border-blue-300 shadow-lg' 
+          ? 'bg-blue-50 border-blue-300 shadow-lg cursor-grabbing' 
           : isScheduled
-            ? 'bg-gray-50 border-gray-200 opacity-60'
-            : 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm cursor-grab'
+            ? 'bg-gray-50 border-gray-200 opacity-60 cursor-not-allowed'
+            : 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm cursor-grab active:cursor-grabbing'
       }`}
     >
-      <button
-        {...attributes}
-        {...listeners}
-        className="p-0.5 text-gray-400 hover:text-gray-600"
-        disabled={isScheduled}
-      >
+      <div className="p-0.5 text-gray-400">
         <GripVertical className="h-4 w-4" />
-      </button>
-      <div className="flex-1 min-w-0">
+      </div>
+      <div className="flex-1 min-w-0 pointer-events-none">
         <p className="text-sm font-medium text-gray-900 truncate">
           {dealer.dealer_name}
         </p>
@@ -58,7 +60,7 @@ function DraggableDealer({ dealer, isScheduled }: DraggableDealerProps) {
         </p>
       </div>
       {isScheduled && (
-        <span className="text-xs text-gray-400">Scheduled</span>
+        <span className="text-xs text-gray-400 pointer-events-none">Scheduled</span>
       )}
     </div>
   )
