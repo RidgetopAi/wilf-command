@@ -1,8 +1,35 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCenter } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, pointerWithin, rectIntersection, CollisionDetection } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
+
+// Custom collision detection that prioritizes day containers for dealer drops
+const customCollisionDetection: CollisionDetection = (args) => {
+  const { active } = args
+  const activeId = active.id as string
+  
+  // For dealer drops, prioritize day containers
+  if (activeId.startsWith('dealer-')) {
+    // First check pointerWithin for precise targeting
+    const pointerCollisions = pointerWithin(args)
+    
+    // Prefer day containers over stop cards
+    const dayCollision = pointerCollisions.find(c => 
+      (c.id as string).startsWith('day-')
+    )
+    if (dayCollision) return [dayCollision]
+    
+    // If no day container, return any collision (could be a stop card)
+    if (pointerCollisions.length > 0) return pointerCollisions
+    
+    // Fallback to rect intersection
+    return rectIntersection(args)
+  }
+  
+  // For stop reordering, use rect intersection
+  return rectIntersection(args)
+}
 import { startOfWeek, startOfMonth, endOfMonth, addDays, format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { Users } from 'lucide-react'
@@ -245,7 +272,7 @@ export default function TravelCalendarPage() {
 
   return (
     <DndContext
-      collisionDetection={closestCenter}
+      collisionDetection={customCollisionDetection}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >

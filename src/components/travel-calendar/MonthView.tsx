@@ -67,9 +67,9 @@ export function MonthView({ currentDate, travelDays, onDayClick }: MonthViewProp
       </div>
 
       {/* Calendar grid */}
-      <div className="flex-1 grid grid-rows-[repeat(auto-fill,minmax(0,1fr))]">
+      <div className="flex-1 flex flex-col">
         {weeks.map((week, weekIndex) => (
-          <div key={weekIndex} className="grid grid-cols-7 border-b border-gray-100 last:border-b-0">
+          <div key={weekIndex} className="flex-1 grid grid-cols-7 border-b border-gray-100 last:border-b-0 min-h-0">
             {week.map(date => {
               const dateStr = format(date, 'yyyy-MM-dd')
               const travelDay = travelDaysByDate.get(dateStr)
