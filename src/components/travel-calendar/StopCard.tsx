@@ -2,11 +2,13 @@
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { 
+import {
   Clock, GripVertical, MoreVertical, FileText, Check, X, RotateCcw,
-  Store, Users, Calendar, Car, User, Ban, MapPin
+  Store, Users, Calendar, Car, User, Ban, MapPin, ChevronDown, ChevronUp,
+  Building2, Hash, ExternalLink
 } from 'lucide-react'
 import { useState } from 'react'
+import Link from 'next/link'
 import type { TravelStop, TravelStopStatus, TravelEventType } from '@/types'
 
 interface StopCardProps {
@@ -46,6 +48,7 @@ export function StopCard({ stop, onStatusChange, onTimeChange, onDelete, onAddNo
   const [showMenu, setShowMenu] = useState(false)
   const [isEditingTime, setIsEditingTime] = useState(false)
   const [timeValue, setTimeValue] = useState(stop.scheduled_time || '')
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const {
     attributes,
@@ -80,11 +83,18 @@ export function StopCard({ stop, onStatusChange, onTimeChange, onDelete, onAddNo
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white border border-gray-200 border-l-4 ${borderColor} rounded-lg p-2.5 shadow-sm hover:shadow-md transition-shadow ${
+      className={`bg-white border border-gray-200 border-l-4 ${borderColor} rounded-lg p-2.5 shadow-sm hover:shadow-md transition-all ${
         isDragging ? 'shadow-lg ring-2 ring-blue-500' : ''
-      } ${stop.is_all_day ? 'bg-gray-50' : ''}`}
+      } ${stop.is_all_day ? 'bg-gray-50' : ''} ${isExpanded ? 'ring-1 ring-blue-200' : ''}`}
     >
-      <div className="flex items-start gap-2">
+      <div
+        className="flex items-start gap-2 cursor-pointer"
+        onClick={(e) => {
+          // Don't toggle if clicking on interactive elements
+          if ((e.target as HTMLElement).closest('button, input, a')) return
+          setIsExpanded(!isExpanded)
+        }}
+      >
         {/* Drag handle */}
         <button
           {...attributes}
@@ -203,9 +213,78 @@ export function StopCard({ stop, onStatusChange, onTimeChange, onDelete, onAddNo
                 <FileText className="h-3 w-3 text-blue-500" />
               </span>
             )}
+
+            {/* Expand indicator */}
+            <span className="ml-auto text-gray-400">
+              {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </span>
           </div>
         </div>
       </div>
+
+      {/* Expanded details */}
+      {isExpanded && (
+        <div className="mt-2 pt-2 border-t border-gray-100 space-y-2">
+          {/* Dealer-specific details */}
+          {!isEvent && stop.dealer && (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-4 text-xs text-gray-600">
+                <span className="flex items-center gap-1">
+                  <Hash className="h-3 w-3" />
+                  {stop.dealer.account_number}
+                </span>
+                {stop.dealer.location_count > 0 && (
+                  <span className="flex items-center gap-1">
+                    <Building2 className="h-3 w-3" />
+                    {stop.dealer.location_count} location{stop.dealer.location_count !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+              {stop.dealer.buying_group && (
+                <p className="text-xs text-gray-500">
+                  <span className="font-medium">Group:</span> {stop.dealer.buying_group}
+                </p>
+              )}
+              <Link
+                href={`/dealers/${stop.dealer.id}`}
+                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                View dealer details
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          )}
+
+          {/* Event-specific details */}
+          {isEvent && (
+            <div className="space-y-1.5">
+              <p className="text-xs text-gray-500 capitalize">
+                <span className="font-medium">Type:</span> {eventType.replace('_', ' ')}
+              </p>
+              {stop.location && (
+                <p className="text-xs text-gray-600 flex items-start gap-1">
+                  <MapPin className="h-3 w-3 mt-0.5 shrink-0" />
+                  <span>{stop.location}</span>
+                </p>
+              )}
+              {stop.duration_minutes > 0 && (
+                <p className="text-xs text-gray-500">
+                  <span className="font-medium">Duration:</span> {stop.duration_minutes} min
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Note preview for both */}
+          {stop.note && (
+            <div className="bg-gray-50 rounded p-2">
+              <p className="text-xs text-gray-600 line-clamp-2">
+                {stop.note.body}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
