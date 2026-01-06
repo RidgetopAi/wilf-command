@@ -50,7 +50,6 @@ export function TagPicker({ tags, selectedIds, onToggle, onCreate }: TagPickerPr
               key={tag.id}
               type="button"
               onClick={() => onToggle(tag.id)}
-              data-selected={isSelected}
               className={
                 isSelected
                   ? 'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm transition-colors bg-indigo-100 text-indigo-800 ring-2 ring-indigo-500'
@@ -64,7 +63,7 @@ export function TagPicker({ tags, selectedIds, onToggle, onCreate }: TagPickerPr
                 />
               )}
               {tag.name}
-              {isSelected ? <X className="w-3 h-3" /> : null}
+              {isSelected && <X className="w-3 h-3" />}
             </button>
           )
         })}
