@@ -3,8 +3,17 @@
 import { useState, useRef } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { format, isToday } from 'date-fns'
+import { format, isToday, getDay } from 'date-fns'
 import { Plus, Store, Calendar } from 'lucide-react'
+
+// Weekday color palette for visual separation (Mon=0, Tue=1, Wed=2, Thu=3, Fri=4)
+const WEEKDAY_COLORS = [
+  { bg: 'bg-blue-100', border: 'border-blue-200', text: 'text-blue-700', accent: 'bg-blue-500' },      // Monday
+  { bg: 'bg-emerald-100', border: 'border-emerald-200', text: 'text-emerald-700', accent: 'bg-emerald-500' }, // Tuesday
+  { bg: 'bg-amber-100', border: 'border-amber-200', text: 'text-amber-700', accent: 'bg-amber-500' },     // Wednesday
+  { bg: 'bg-purple-100', border: 'border-purple-200', text: 'text-purple-700', accent: 'bg-purple-500' },   // Thursday
+  { bg: 'bg-rose-100', border: 'border-rose-200', text: 'text-rose-700', accent: 'bg-rose-500' },        // Friday
+]
 import { TerritorySelector } from './TerritorySelector'
 import { StopCard } from './StopCard'
 import { DealerSearchPopover } from './DealerSearchPopover'
@@ -55,6 +64,11 @@ export function DayColumn({
   const dateStr = format(date, 'yyyy-MM-dd')
   const today = isToday(date)
   const stops = travelDay?.stops || []
+
+  // Get weekday index (0=Mon, 1=Tue, etc.) - getDay returns 0=Sun, so we convert
+  const dayOfWeek = getDay(date)
+  const weekdayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1 // Convert Sun=0 to Mon=0
+  const dayColors = WEEKDAY_COLORS[weekdayIndex] || WEEKDAY_COLORS[0]
   
   const [showDealerSearch, setShowDealerSearch] = useState(false)
   const [showEventForm, setShowEventForm] = useState(false)
@@ -90,7 +104,7 @@ export function DayColumn({
   return (
     <div
       className={`flex-1 min-w-0 border-r border-gray-200 last:border-r-0 flex flex-col ${
-        today ? 'bg-blue-50/50' : ''
+        today ? 'ring-2 ring-inset ring-gray-400' : ''
       }`}
     >
       {/* Territory banner - shows when territory is set */}
@@ -113,19 +127,19 @@ export function DayColumn({
         </div>
       ) : null}
 
-      {/* Day header */}
-      <div className={`p-2 sm:p-3 border-b border-gray-200 ${today ? 'bg-blue-100/50' : 'bg-gray-50'}`}>
+      {/* Day header - colored by weekday */}
+      <div className={`p-2 sm:p-3 border-b ${dayColors.border} ${dayColors.bg}`}>
         <div className="flex items-center justify-between mb-1">
-          <span className={`text-xs font-medium uppercase ${today ? 'text-blue-600' : 'text-gray-500'}`}>
+          <span className={`text-xs font-medium uppercase ${dayColors.text}`}>
             {format(date, 'EEE')}
           </span>
           {today && (
-            <span className="text-xs font-medium text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">
+            <span className={`text-xs font-medium ${dayColors.text} bg-white/60 px-1.5 py-0.5 rounded`}>
               Today
             </span>
           )}
         </div>
-        <div className={`text-lg font-semibold ${today ? 'text-blue-900' : 'text-gray-900'}`}>
+        <div className={`text-lg font-semibold ${dayColors.text}`}>
           {format(date, 'd')}
         </div>
         
