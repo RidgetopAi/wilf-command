@@ -149,11 +149,15 @@ export function NoteForm({
   }
 
   const handleTagToggle = (tagId: string) => {
-    setSelectedTagIds(prev => 
-      prev.includes(tagId)
+    console.log('handleTagToggle called with:', tagId)
+    console.log('current selectedTagIds:', selectedTagIds)
+    setSelectedTagIds(prev => {
+      const newIds = prev.includes(tagId)
         ? prev.filter(id => id !== tagId)
         : [...prev, tagId]
-    )
+      console.log('new selectedTagIds:', newIds)
+      return newIds
+    })
   }
 
   const handleUploadComplete = (attachment: UploadedAttachment) => {
