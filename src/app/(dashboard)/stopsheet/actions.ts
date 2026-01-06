@@ -367,3 +367,37 @@ export async function unlockStopSheet(id: string): Promise<{ success: boolean; e
   revalidatePath(`/stopsheet/${id}`)
   return { success: true }
 }
+
+export async function deleteStopSheet(id: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  // Only allow deletion of in_progress stopsheets
+  const { data: stopsheet } = await supabase
+    .from('stopsheets')
+    .select('status')
+    .eq('id', id)
+    .single()
+
+  if (stopsheet?.status === 'completed') {
+    return { success: false, error: 'Cannot delete a completed stopsheet' }
+  }
+
+  // Delete items first (cascade should handle this, but being explicit)
+  await supabase
+    .from('stopsheet_items')
+    .delete()
+    .eq('stopsheet_id', id)
+
+  const { error } = await supabase
+    .from('stopsheets')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error('Failed to delete stopsheet:', error)
+    return { success: false, error: 'Failed to delete stopsheet' }
+  }
+
+  revalidatePath('/stopsheet')
+  return { success: true }
+}
