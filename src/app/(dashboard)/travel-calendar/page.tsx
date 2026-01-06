@@ -12,7 +12,7 @@ import {
   DealerSidebar 
 } from '@/components/travel-calendar'
 import { createClient } from '@/lib/supabase/client'
-import type { TravelDay, TravelStop, Territory, Dealer, TravelStopStatus } from '@/types'
+import type { TravelDay, TravelStop, Territory, Dealer, TravelStopStatus, TravelEventType } from '@/types'
 import { 
   createTerritory, 
   updateTravelDay, 
@@ -20,7 +20,8 @@ import {
   updateTravelStop, 
   deleteTravelStop,
   reorderStops,
-  createVisitNote
+  createVisitNote,
+  addCalendarEvent
 } from './actions'
 
 export default function TravelCalendarPage() {
@@ -97,7 +98,9 @@ export default function TravelCalendarPage() {
     const ids = new Set<string>()
     travelDays.forEach(day => {
       day.stops?.forEach(stop => {
-        ids.add(stop.dealer_id)
+        if (stop.dealer_id) {
+          ids.add(stop.dealer_id)
+        }
       })
     })
     return ids
@@ -121,6 +124,19 @@ export default function TravelCalendarPage() {
     loadData()
   }
 
+  const handleAddEvent = async (date: Date, event: {
+    event_title: string
+    event_type: TravelEventType
+    is_all_day: boolean
+    scheduled_time?: string
+    end_time?: string
+    location?: string
+  }) => {
+    const dateStr = format(date, 'yyyy-MM-dd')
+    await addCalendarEvent(dateStr, event)
+    loadData()
+  }
+
   const handleStopStatusChange = async (stopId: string, status: TravelStopStatus) => {
     await updateTravelStop(stopId, { status })
     loadData()
@@ -140,8 +156,8 @@ export default function TravelCalendarPage() {
     if (stop.note_id) {
       // Navigate to existing note
       router.push(`/notes?highlight=${stop.note_id}`)
-    } else {
-      // Create new note and navigate
+    } else if (stop.dealer_id) {
+      // Create new note and navigate (only for dealer visits)
       const travelDay = travelDays.find(d => d.stops?.some(s => s.id === stop.id))
       if (travelDay) {
         const result = await createVisitNote(stop.id, stop.dealer_id, travelDay.date)
@@ -246,6 +262,7 @@ export default function TravelCalendarPage() {
             onTerritoryChange={handleTerritoryChange}
             onCreateTerritory={handleCreateTerritory}
             onAddDealer={handleAddDealer}
+            onAddEvent={handleAddEvent}
             onStopStatusChange={handleStopStatusChange}
             onStopTimeChange={handleStopTimeChange}
             onStopDelete={handleStopDelete}

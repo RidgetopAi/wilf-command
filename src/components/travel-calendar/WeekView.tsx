@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { startOfWeek, addDays, format } from 'date-fns'
 import { DayColumn } from './DayColumn'
-import type { TravelDay, Territory, TravelStop, TravelStopStatus, Dealer } from '@/types'
+import type { TravelDay, Territory, TravelStop, TravelStopStatus, Dealer, TravelEventType } from '@/types'
 
 interface WeekViewProps {
   currentDate: Date
@@ -14,6 +14,14 @@ interface WeekViewProps {
   onTerritoryChange: (date: Date, territoryId: string | null) => void
   onCreateTerritory: (name: string) => Promise<void>
   onAddDealer: (date: Date, dealerId: string) => void
+  onAddEvent: (date: Date, event: {
+    event_title: string
+    event_type: TravelEventType
+    is_all_day: boolean
+    scheduled_time?: string
+    end_time?: string
+    location?: string
+  }) => void
   onStopStatusChange: (stopId: string, status: TravelStopStatus) => void
   onStopTimeChange: (stopId: string, time: string) => void
   onStopDelete: (stopId: string) => void
@@ -30,6 +38,7 @@ export function WeekView({
   onTerritoryChange,
   onCreateTerritory,
   onAddDealer,
+  onAddEvent,
   onStopStatusChange,
   onStopTimeChange,
   onStopDelete,
@@ -66,6 +75,7 @@ export function WeekView({
             onTerritoryChange={onTerritoryChange}
             onCreateTerritory={onCreateTerritory}
             onAddDealer={onAddDealer}
+            onAddEvent={onAddEvent}
             onStopStatusChange={onStopStatusChange}
             onStopTimeChange={onStopTimeChange}
             onStopDelete={onStopDelete}

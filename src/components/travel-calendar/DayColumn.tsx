@@ -4,12 +4,13 @@ import { useState, useRef } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { format, isToday } from 'date-fns'
-import { Plus } from 'lucide-react'
+import { Plus, Store, Calendar } from 'lucide-react'
 import { TerritorySelector } from './TerritorySelector'
 import { StopCard } from './StopCard'
 import { DealerSearchPopover } from './DealerSearchPopover'
 import { DealerSearchSheet } from './DealerSearchSheet'
-import type { TravelDay, TravelStop, Territory, TravelStopStatus, Dealer } from '@/types'
+import { EventForm } from './EventForm'
+import type { TravelDay, TravelStop, Territory, TravelStopStatus, Dealer, TravelEventType } from '@/types'
 
 interface DayColumnProps {
   date: Date
@@ -20,6 +21,14 @@ interface DayColumnProps {
   onTerritoryChange: (date: Date, territoryId: string | null) => void
   onCreateTerritory: (name: string) => Promise<void>
   onAddDealer: (date: Date, dealerId: string) => void
+  onAddEvent: (date: Date, event: {
+    event_title: string
+    event_type: TravelEventType
+    is_all_day: boolean
+    scheduled_time?: string
+    end_time?: string
+    location?: string
+  }) => void
   onStopStatusChange: (stopId: string, status: TravelStopStatus) => void
   onStopTimeChange: (stopId: string, time: string) => void
   onStopDelete: (stopId: string) => void
@@ -36,6 +45,7 @@ export function DayColumn({
   onTerritoryChange,
   onCreateTerritory,
   onAddDealer,
+  onAddEvent,
   onStopStatusChange,
   onStopTimeChange,
   onStopDelete,
@@ -46,7 +56,9 @@ export function DayColumn({
   const today = isToday(date)
   const stops = travelDay?.stops || []
   
-  const [showSearch, setShowSearch] = useState(false)
+  const [showDealerSearch, setShowDealerSearch] = useState(false)
+  const [showEventForm, setShowEventForm] = useState(false)
+  const [showAddMenu, setShowAddMenu] = useState(false)
   const addButtonRef = useRef<HTMLButtonElement>(null)
 
   const { setNodeRef, isOver } = useDroppable({
@@ -59,7 +71,18 @@ export function DayColumn({
     onAddDealer(date, dealerId)
   }
 
-  // Check if we're on mobile (simple check, could use a hook for more robust detection)
+  const handleAddEvent = (event: {
+    event_title: string
+    event_type: TravelEventType
+    is_all_day: boolean
+    scheduled_time?: string
+    end_time?: string
+    location?: string
+  }) => {
+    onAddEvent(date, event)
+  }
+
+  // Check if we're on mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
 
   return (
@@ -118,38 +141,76 @@ export function DayColumn({
           ))}
         </SortableContext>
 
-        {/* Add dealer button */}
+        {/* Add button with menu */}
         <div className="relative">
           <button
             ref={addButtonRef}
-            onClick={() => setShowSearch(true)}
+            onClick={() => setShowAddMenu(!showAddMenu)}
             className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg border-2 border-dashed border-gray-200 hover:border-gray-300 transition-colors"
           >
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Add dealer</span>
+            <span className="hidden sm:inline">Add</span>
           </button>
 
-          {/* Desktop popover */}
-          {showSearch && !isMobile && (
+          {/* Add menu dropdown */}
+          {showAddMenu && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setShowAddMenu(false)} />
+              <div className="absolute bottom-full left-0 mb-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[160px]">
+                <button
+                  onClick={() => {
+                    setShowAddMenu(false)
+                    setShowDealerSearch(true)
+                  }}
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <Store className="h-4 w-4 text-blue-500" />
+                  Add Dealer Visit
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddMenu(false)
+                    setShowEventForm(true)
+                  }}
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <Calendar className="h-4 w-4 text-purple-500" />
+                  Add Event
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Desktop dealer popover */}
+          {showDealerSearch && !isMobile && (
             <DealerSearchPopover
               dealers={dealers}
               scheduledDealerIds={scheduledDealerIds}
               onSelect={handleAddDealer}
-              onClose={() => setShowSearch(false)}
+              onClose={() => setShowDealerSearch(false)}
               anchorRef={addButtonRef}
             />
           )}
         </div>
       </div>
 
-      {/* Mobile bottom sheet */}
-      {showSearch && isMobile && (
+      {/* Mobile dealer bottom sheet */}
+      {showDealerSearch && isMobile && (
         <DealerSearchSheet
           dealers={dealers}
           scheduledDealerIds={scheduledDealerIds}
           onSelect={handleAddDealer}
-          onClose={() => setShowSearch(false)}
+          onClose={() => setShowDealerSearch(false)}
           dateLabel={format(date, 'EEE, MMM d')}
+        />
+      )}
+
+      {/* Event form (works for both desktop and mobile) */}
+      {showEventForm && (
+        <EventForm
+          dateLabel={format(date, 'EEE, MMM d')}
+          onSave={handleAddEvent}
+          onClose={() => setShowEventForm(false)}
         />
       )}
     </div>

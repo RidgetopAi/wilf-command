@@ -314,16 +314,32 @@ export interface TravelDay {
 }
 
 export type TravelStopStatus = 'planned' | 'completed' | 'cancelled' | 'rescheduled'
+export type TravelEventType = 'dealer_visit' | 'meeting' | 'event' | 'travel' | 'personal' | 'blocked'
+
+export const EVENT_TYPE_CONFIG: Record<TravelEventType, { label: string; color: string; icon: string }> = {
+  dealer_visit: { label: 'Dealer Visit', color: 'blue', icon: 'Store' },
+  meeting: { label: 'Meeting', color: 'purple', icon: 'Users' },
+  event: { label: 'Event', color: 'green', icon: 'Calendar' },
+  travel: { label: 'Travel', color: 'orange', icon: 'Car' },
+  personal: { label: 'Personal', color: 'gray', icon: 'User' },
+  blocked: { label: 'Blocked', color: 'red', icon: 'Ban' }
+}
 
 export interface TravelStop {
   id: string
   travel_day_id: string
-  dealer_id: string
+  dealer_id: string | null
   scheduled_time: string | null
   duration_minutes: number
   sort_order: number
   status: TravelStopStatus
   note_id: string | null
+  // Event fields
+  event_title: string | null
+  event_type: TravelEventType
+  is_all_day: boolean
+  end_time: string | null
+  location: string | null
   created_at: string
   updated_at: string
   // Joined data
@@ -333,10 +349,16 @@ export interface TravelStop {
 
 export interface CreateTravelStopInput {
   travel_day_id: string
-  dealer_id: string
+  dealer_id?: string
   scheduled_time?: string
   duration_minutes?: number
   sort_order?: number
+  // Event fields
+  event_title?: string
+  event_type?: TravelEventType
+  is_all_day?: boolean
+  end_time?: string
+  location?: string
 }
 
 export interface UpdateTravelStopInput {

@@ -251,3 +251,89 @@ export async function createVisitNote(
   revalidatePath('/travel-calendar')
   return { success: true, noteId: note.id }
 }
+
+export async function addCalendarEvent(
+  date: string,
+  event: {
+    event_title: string
+    event_type: string
+    is_all_day: boolean
+    scheduled_time?: string
+    end_time?: string
+    location?: string
+  }
+) {
+  const supabase = await createClient()
+
+  const { data: user } = await supabase.auth.getUser()
+  if (!user.user) return { success: false, error: 'Not authenticated' }
+
+  const { data: userData } = await supabase
+    .from('users')
+    .select('rep_id')
+    .eq('id', user.user.id)
+    .single()
+
+  if (!userData) return { success: false, error: 'User not found' }
+
+  // Get or create travel day
+  let { data: travelDay } = await supabase
+    .from('travel_days')
+    .select('id')
+    .eq('rep_id', userData.rep_id)
+    .eq('date', date)
+    .single()
+
+  if (!travelDay) {
+    const { data: newDay, error: dayError } = await supabase
+      .from('travel_days')
+      .insert({
+        rep_id: userData.rep_id,
+        date
+      })
+      .select('id')
+      .single()
+
+    if (dayError) {
+      return { success: false, error: dayError.message }
+    }
+    travelDay = newDay
+  }
+
+  // Get max sort order (all-day events at top, sort_order = 0 for all-day)
+  let nextOrder = 0
+  if (!event.is_all_day) {
+    const { data: maxOrder } = await supabase
+      .from('travel_stops')
+      .select('sort_order')
+      .eq('travel_day_id', travelDay.id)
+      .order('sort_order', { ascending: false })
+      .limit(1)
+      .single()
+    nextOrder = (maxOrder?.sort_order ?? -1) + 1
+  }
+
+  // Create the event
+  const { data: stop, error } = await supabase
+    .from('travel_stops')
+    .insert({
+      travel_day_id: travelDay.id,
+      dealer_id: null,
+      event_title: event.event_title,
+      event_type: event.event_type,
+      is_all_day: event.is_all_day,
+      scheduled_time: event.scheduled_time || null,
+      end_time: event.end_time || null,
+      location: event.location || null,
+      sort_order: nextOrder
+    })
+    .select()
+    .single()
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/travel-calendar')
+  return { success: true, stop }
+}
