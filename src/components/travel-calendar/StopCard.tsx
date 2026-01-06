@@ -277,10 +277,18 @@ export function StopCard({ stop, onStatusChange, onTimeChange, onDelete, onAddNo
 
           {/* Note preview for both */}
           {stop.note && (
-            <div className="bg-gray-50 rounded p-2">
+            <div className="bg-gray-50 rounded p-2 space-y-1.5">
               <p className="text-xs text-gray-600 line-clamp-2">
                 {stop.note.body}
               </p>
+              <Link
+                href={`/notes?noteId=${stop.note.id}`}
+                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                <FileText className="h-3 w-3" />
+                View full note
+                <ExternalLink className="h-3 w-3" />
+              </Link>
             </div>
           )}
         </div>

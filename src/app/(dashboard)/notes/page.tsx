@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { FileText } from 'lucide-react'
 import { Note, Tag, NoteType } from '@/types'
 import { 
@@ -29,13 +30,17 @@ interface EventOption {
 }
 
 export default function NotesPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const noteIdParam = searchParams.get('noteId')
+
   const [notes, setNotes] = useState<Note[]>([])
   const [filteredNotes, setFilteredNotes] = useState<Note[]>([])
   const [tags, setTags] = useState<Tag[]>([])
   const [dealers, setDealers] = useState<DealerOption[]>([])
   const [events, setEvents] = useState<EventOption[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  
+
   const [showNoteForm, setShowNoteForm] = useState(false)
   const [editingNote, setEditingNote] = useState<Note | null>(null)
   const [viewingNote, setViewingNote] = useState<Note | null>(null)
@@ -127,6 +132,18 @@ export default function NotesPage() {
     
     loadData()
   }, [])
+
+  // Auto-open note from URL param (e.g., /notes?noteId=xxx)
+  useEffect(() => {
+    if (noteIdParam && notes.length > 0 && !viewingNote) {
+      const note = notes.find(n => n.id === noteIdParam)
+      if (note) {
+        setViewingNote(note)
+        // Clear the URL param after opening
+        router.replace('/notes', { scroll: false })
+      }
+    }
+  }, [noteIdParam, notes, viewingNote, router])
 
   // Apply filters when they change
   const applyFilters = useCallback((notes: Note[], filters: NotesFilterState): Note[] => {
