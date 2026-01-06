@@ -38,6 +38,30 @@ const ALLOWED_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 ]
 
+// Extension to MIME type mapping for fallback detection
+const EXT_TO_MIME: Record<string, string> = {
+  'txt': 'text/plain',
+  'pdf': 'application/pdf',
+  'doc': 'application/msword',
+  'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'jpg': 'image/jpeg',
+  'jpeg': 'image/jpeg',
+  'png': 'image/png',
+  'gif': 'image/gif',
+  'webp': 'image/webp'
+}
+
+// Get reliable MIME type - fallback to extension if browser doesn't provide type
+const getFileMimeType = (file: File): string => {
+  // If browser provides a valid type, use it (strip charset if present)
+  if (file.type && file.type !== '') {
+    return file.type.split(';')[0].trim()
+  }
+  // Fallback to extension-based detection
+  const ext = file.name.split('.').pop()?.toLowerCase() || ''
+  return EXT_TO_MIME[ext] || 'application/octet-stream'
+}
+
 export function AttachmentUploader({
   noteId,
   dealerId,
@@ -64,9 +88,12 @@ export function AttachmentUploader({
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
-      
+
+      // Get reliable MIME type (handles empty/missing browser type)
+      const mimeType = getFileMimeType(file)
+
       // Validate type
-      if (!ALLOWED_TYPES.includes(file.type)) {
+      if (!ALLOWED_TYPES.includes(mimeType)) {
         newFiles.push({
           id: generateId(),
           file,
@@ -94,7 +121,7 @@ export function AttachmentUploader({
 
       // Generate preview for images
       let preview: string | undefined
-      if (file.type.startsWith('image/')) {
+      if (mimeType.startsWith('image/')) {
         preview = URL.createObjectURL(file)
       }
 
@@ -118,7 +145,10 @@ export function AttachmentUploader({
 
   const uploadFile = async (item: PendingAttachment, currentPending: PendingAttachment[]) => {
     const supabase = createClient()
-    
+
+    // Get reliable MIME type for upload
+    const mimeType = getFileMimeType(item.file)
+
     // Generate storage path
     const ext = item.file.name.split('.').pop() || 'bin'
     const timestamp = Date.now()
@@ -128,7 +158,8 @@ export function AttachmentUploader({
       .from('note-attachments')
       .upload(storagePath, item.file, {
         cacheControl: '3600',
-        upsert: false
+        upsert: false,
+        contentType: mimeType
       })
 
     const updatedPending = currentPending.map(p => {
@@ -145,7 +176,7 @@ export function AttachmentUploader({
       onUploadComplete?.({
         storagePath,
         fileName: item.file.name,
-        mimeType: item.file.type,
+        mimeType,
         fileSize: item.file.size
       })
     }
@@ -217,7 +248,7 @@ export function AttachmentUploader({
       {pending.length > 0 && (
         <div className="space-y-2">
           {pending.map(item => {
-            const FileIcon = getFileIcon(item.file.type)
+            const FileIcon = getFileIcon(getFileMimeType(item.file))
             
             return (
               <div
