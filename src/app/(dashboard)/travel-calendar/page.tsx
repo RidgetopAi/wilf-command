@@ -203,14 +203,20 @@ export default function TravelCalendarPage() {
           const result = await createVisitNote(stop.id, stop.dealer_id, travelDay.date)
           if (result.success && result.noteId) {
             router.push(`/notes?highlight=${result.noteId}`)
+          } else {
+            console.error('Failed to create visit note:', result.error)
           }
         } else {
           // Create event note (no dealer)
           const result = await createEventNote(stop.id, stop.event_title || 'Event', travelDay.date)
           if (result.success && result.noteId) {
             router.push(`/notes?highlight=${result.noteId}`)
+          } else {
+            console.error('Failed to create event note:', result.error)
           }
         }
+      } else {
+        console.error('Could not find travel day for stop:', stop.id)
       }
     }
   }
