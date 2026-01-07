@@ -53,9 +53,9 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // If user is signed in and on auth pages, redirect to /dealers
+  // If user is signed in and on auth pages, redirect to Command (home)
   if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
-    return NextResponse.redirect(new URL('/dealers', request.url))
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   // If user is NOT signed in and not on public auth pages, redirect to /login
