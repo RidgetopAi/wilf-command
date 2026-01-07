@@ -53,14 +53,18 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // If user is signed in and the current path is /login, redirect to /dealers
-  if (user && request.nextUrl.pathname === '/login') {
+  // If user is signed in and on auth pages, redirect to /dealers
+  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
     return NextResponse.redirect(new URL('/dealers', request.url))
   }
 
-  // If user is NOT signed in and the current path is NOT /login or auth callback, redirect to /login
-  // We allow /auth/callback usually for magic links, but here we might just stick to email/password
-  if (!user && !request.nextUrl.pathname.startsWith('/login') && !request.nextUrl.pathname.startsWith('/auth')) {
+  // If user is NOT signed in and not on public auth pages, redirect to /login
+  const isPublicAuthPath =
+    request.nextUrl.pathname.startsWith('/login') ||
+    request.nextUrl.pathname.startsWith('/signup') ||
+    request.nextUrl.pathname.startsWith('/auth')
+
+  if (!user && !isPublicAuthPath) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
