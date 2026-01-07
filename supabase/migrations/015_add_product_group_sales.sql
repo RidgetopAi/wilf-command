@@ -11,7 +11,7 @@ CREATE TABLE product_group_sales (
   product_group TEXT NOT NULL,      -- e.g., 'NORTH STAR FLOORING'
   category TEXT NOT NULL,            -- e.g., 'ns_resp' (for filtering)
   sales DECIMAL(12,2) DEFAULT 0,
-  qty INTEGER DEFAULT 0,
+  qty DECIMAL(12,2) DEFAULT 0,
   orders INTEGER DEFAULT 0,
   period_start DATE,
   period_end DATE,
