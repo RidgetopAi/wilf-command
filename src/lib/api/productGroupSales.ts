@@ -3,17 +3,26 @@ import { ProductGroupSales, ProductGroupSummary, PeriodType } from '@/types'
 
 // Helper to get month range for a period type
 function getPeriodMonths(periodType: PeriodType, year: number, month: number): number[] {
+  const currentYear = new Date().getFullYear()
+  const currentMonth = new Date().getMonth() + 1
+
   switch (periodType) {
     case 'month':
       return [month]
     case 'quarter': {
       const quarterStart = Math.floor((month - 1) / 3) * 3 + 1
-      return [quarterStart, quarterStart + 1, quarterStart + 2].filter(m => m <= month)
+      // For past years/quarters, include all months in the quarter
+      // For current year, limit to current month
+      const maxMonth = year < currentYear ? quarterStart + 2 : Math.min(quarterStart + 2, currentMonth)
+      return [quarterStart, quarterStart + 1, quarterStart + 2].filter(m => m <= maxMonth)
     }
     case 'year':
       return Array.from({ length: 12 }, (_, i) => i + 1)
     case 'ytd':
-      return Array.from({ length: month }, (_, i) => i + 1)
+      // For past years, include all 12 months
+      // For current year, include up to current month
+      const ytdMaxMonth = year < currentYear ? 12 : currentMonth
+      return Array.from({ length: ytdMaxMonth }, (_, i) => i + 1)
     default:
       return [month]
   }
