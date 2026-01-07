@@ -215,6 +215,15 @@ export async function parseMonthlySalesPreview(
           warnings.push(`${unmappedProducts.size} product group(s) not mapped to categories`)
         }
 
+        // DEBUG: Log product group data
+        console.log('DEBUG parseMonthlySalesPreview:')
+        console.log('  - productGroupData size:', productGroupData.size)
+        console.log('  - accounts with data:', Array.from(productGroupData.keys()).slice(0, 5))
+        if (productGroupData.size > 0) {
+          const firstAccount = Array.from(productGroupData.keys())[0]
+          console.log('  - first account groups:', productGroupData.get(firstAccount))
+        }
+
         // Sort dealers by sales for top list
         const topDealers = [...dealerSales.values()]
           .sort((a, b) => b.sales - a.sales)
@@ -336,9 +345,15 @@ export async function commitSalesData(
   }
 
   // 2. Upsert individual product groups to product_group_sales
+  console.log('DEBUG commitSalesData:')
+  console.log('  - productGroupData received:', !!productGroupData)
+  console.log('  - productGroupData size:', productGroupData?.size ?? 'undefined')
+
   if (productGroupData && productGroupData.size > 0) {
     let productGroupSuccess = 0
     let productGroupErrors = 0
+
+    console.log('  - Starting product group upserts...')
 
     for (const [accountNumber, groups] of productGroupData.entries()) {
       for (const group of groups) {
@@ -357,17 +372,22 @@ export async function commitSalesData(
           updated_at: new Date().toISOString()
         }
 
-        const { error } = await supabase
+        const { error, data } = await supabase
           .from('product_group_sales')
           .upsert(payload, {
             onConflict: 'rep_id,account_number,year,month,product_group'
           })
+          .select()
 
         if (error) {
           productGroupErrors++
+          console.log('  - UPSERT ERROR:', error.message, 'for', accountNumber, group.product_group)
           result.details.push(`Failed product group ${group.product_group} for ${accountNumber}: ${error.message}`)
         } else {
           productGroupSuccess++
+          if (productGroupSuccess <= 3) {
+            console.log('  - UPSERT SUCCESS:', accountNumber, group.product_group, 'returned:', data?.length, 'rows')
+          }
         }
       }
     }
