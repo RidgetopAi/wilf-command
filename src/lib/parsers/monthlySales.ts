@@ -27,6 +27,15 @@ interface AggregatedSales {
   sheet_orders: number
 }
 
+// Individual product group data (for product_group_sales table)
+export interface ProductGroupRow {
+  product_group: string    // e.g., 'NORTH STAR FLOORING'
+  category: string         // e.g., 'ns_resp'
+  sales: number
+  qty: number
+  orders: number
+}
+
 type CategoryPrefix = 'adura' | 'wood_laminate' | 'sundries' | 'ns_resp' | 'sheet'
 
 // Preview result interface for two-step upload
@@ -57,6 +66,8 @@ export interface SalesPreview {
   // Store parsed data for later upload
   parsedData: Map<string, AggregatedSales>
   dealerNameMap: Map<string, string> // accountNumber -> dealerName
+  // Individual product group data for product_group_sales table
+  productGroupData: Map<string, ProductGroupRow[]> // accountNumber -> array of product groups
 }
 
 const PRODUCT_MAPPING: Record<string, CategoryPrefix> = {
@@ -93,6 +104,7 @@ export async function parseMonthlySalesPreview(
       skipEmptyLines: true,
       complete: async (results) => {
         const accountData = new Map<string, AggregatedSales>()
+        const productGroupData = new Map<string, ProductGroupRow[]>() // Individual product groups by account
         const dealerSales = new Map<string, { name: string; sales: number; orders: number }>()
         const unmatchedDealers = new Set<string>()
         const unmappedProducts = new Set<string>()
@@ -169,6 +181,27 @@ export async function parseMonthlySalesPreview(
             current[`${category}_orders` as keyof AggregatedSales] += orders
             byCategory[category] += value
             byCategoryOrders[category] += orders
+
+            // Capture individual product group data
+            if (!productGroupData.has(accountNum)) {
+              productGroupData.set(accountNum, [])
+            }
+            const accountGroups = productGroupData.get(accountNum)!
+            // Find existing entry for this product group or create new
+            const existingGroup = accountGroups.find(g => g.product_group === productGroup)
+            if (existingGroup) {
+              existingGroup.sales += value
+              existingGroup.qty += qty
+              existingGroup.orders += orders
+            } else {
+              accountGroups.push({
+                product_group: productGroup,
+                category,
+                sales: value,
+                qty: qty,
+                orders: orders
+              })
+            }
           } else {
             unmappedProducts.add(productGroup)
           }
@@ -200,7 +233,8 @@ export async function parseMonthlySalesPreview(
           unmappedProducts: Array.from(unmappedProducts),
           warnings,
           parsedData: accountData,
-          dealerNameMap
+          dealerNameMap,
+          productGroupData
         })
       },
       error: (err) => {
@@ -249,7 +283,8 @@ export async function commitSalesData(
   parsedData: Map<string, AggregatedSales>,
   repId: string,
   periodStart: Date,
-  periodEnd: Date
+  periodEnd: Date,
+  productGroupData?: Map<string, ProductGroupRow[]>  // Optional for backward compatibility
 ): Promise<{ success: number; errors: number; details: string[] }> {
   const supabase = createClient()
   const result = { success: 0, errors: 0, details: [] as string[] }
@@ -258,6 +293,7 @@ export async function commitSalesData(
   const year = periodStart.getFullYear()
   const month = periodStart.getMonth() + 1
 
+  // 1. Upsert category aggregates to product_mix_monthly
   for (const [accountNumber, sales] of parsedData.entries()) {
     const total_sales =
       sales.adura_sales + sales.wood_laminate_sales + sales.sundries_sales + sales.ns_resp_sales + sales.sheet_sales
@@ -296,6 +332,49 @@ export async function commitSalesData(
       result.details.push(`Failed ${accountNumber}: ${error.message}`)
     } else {
       result.success++
+    }
+  }
+
+  // 2. Upsert individual product groups to product_group_sales
+  if (productGroupData && productGroupData.size > 0) {
+    let productGroupSuccess = 0
+    let productGroupErrors = 0
+
+    for (const [accountNumber, groups] of productGroupData.entries()) {
+      for (const group of groups) {
+        const payload = {
+          rep_id: repId,
+          account_number: accountNumber,
+          year,
+          month,
+          product_group: group.product_group,
+          category: group.category,
+          sales: group.sales,
+          qty: group.qty,
+          orders: group.orders,
+          period_start: formatDateForDB(periodStart),
+          period_end: formatDateForDB(periodEnd),
+          updated_at: new Date().toISOString()
+        }
+
+        const { error } = await supabase
+          .from('product_group_sales')
+          .upsert(payload, {
+            onConflict: 'rep_id,account_number,year,month,product_group'
+          })
+
+        if (error) {
+          productGroupErrors++
+          result.details.push(`Failed product group ${group.product_group} for ${accountNumber}: ${error.message}`)
+        } else {
+          productGroupSuccess++
+        }
+      }
+    }
+
+    // Add summary to details
+    if (productGroupSuccess > 0 || productGroupErrors > 0) {
+      result.details.push(`Product groups: ${productGroupSuccess} saved, ${productGroupErrors} errors`)
     }
   }
 

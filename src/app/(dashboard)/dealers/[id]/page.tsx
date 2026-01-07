@@ -3,7 +3,7 @@ import { getDisplays, getDealerDisplays } from '@/lib/api/displays'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ProductMixDashboard } from '@/components/product-mix/ProductMixDashboard'
-import { Settings, FileText, ClipboardCheck } from 'lucide-react'
+import { Settings, FileText, ClipboardCheck, BarChart3 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,6 +45,13 @@ export default async function DealerDetailPage(props: { params: Promise<{ id: st
           >
             <ClipboardCheck className="h-4 w-4" />
             StopSheet
+          </Link>
+          <Link
+            href={`/dealers/${dealer.id}/product-groups`}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-amber-600 border border-amber-600 rounded-md shadow-sm hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Products
           </Link>
           <Link
             href={`/dealers/${dealer.id}/attributes`}

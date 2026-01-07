@@ -418,3 +418,41 @@ export interface StopSheetItem {
   sort_order: number
   created_at: string
 }
+
+// =============================================
+// PRODUCT GROUP SALES TYPES
+// =============================================
+
+export type PeriodType = 'month' | 'quarter' | 'year' | 'ytd'
+
+export type ProductCategory = 'adura' | 'wood_laminate' | 'sundries' | 'ns_resp' | 'sheet'
+
+export interface ProductGroupSales {
+  id: string
+  rep_id: string
+  account_number: string
+  year: number
+  month: number
+  product_group: string    // e.g., 'NORTH STAR FLOORING'
+  category: string         // e.g., 'ns_resp'
+  sales: number
+  qty: number
+  orders: number
+  period_start: string | null
+  period_end: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ProductGroupSummary {
+  product_group: string
+  category: string
+  current_sales: number
+  current_qty: number
+  current_orders: number
+  prior_sales: number
+  prior_qty: number
+  prior_orders: number
+  growth_pct: number
+  growth_dollars: number
+}

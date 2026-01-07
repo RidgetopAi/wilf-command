@@ -148,7 +148,7 @@ export default function UploadPage() {
     setShowConfirm(false)
 
     try {
-      const result = await commitSalesData(preview.parsedData, repId, periodStart, periodEnd)
+      const result = await commitSalesData(preview.parsedData, repId, periodStart, periodEnd, preview.productGroupData)
 
       if (result.errors > 0) {
         setStatus({
