@@ -16,7 +16,7 @@ export default async function DashboardPage() {
   }
 
   // Get rep_id for the user
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('users')
     .select('rep_id')
     .eq('id', user.id)
@@ -24,16 +24,20 @@ export default async function DashboardPage() {
 
   if (!profile?.rep_id) {
     // Fallback: try by email
-    const { data: emailProfile } = await supabase
+    const { data: emailProfile, error: emailError } = await supabase
       .from('users')
       .select('rep_id')
       .eq('email', user.email)
       .single()
 
     if (!emailProfile?.rep_id) {
+      console.error('Profile lookup failed for user:', user.id, user.email)
+      console.error('By ID error:', profileError?.message, profileError?.code)
+      console.error('By email error:', emailError?.message, emailError?.code)
       return (
         <div className="text-center py-12">
           <p className="text-red-600">Unable to load your rep profile. Please contact support.</p>
+          <p className="text-gray-500 text-sm mt-2">User ID: {user.id}</p>
         </div>
       )
     }

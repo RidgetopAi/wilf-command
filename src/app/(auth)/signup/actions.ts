@@ -48,6 +48,11 @@ export async function signup(formData: FormData) {
   }
 
   // Use service role to create user profile (new user doesn't have RLS permissions yet)
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('SUPABASE_SERVICE_ROLE_KEY is not configured')
+    return redirect(`/signup?message=${encodeURIComponent('Server configuration error. Contact admin.')}`)
+  }
+
   const supabaseAdmin = await createClient(true)
 
   const { error: profileError } = await supabaseAdmin
@@ -63,7 +68,7 @@ export async function signup(formData: FormData) {
   if (profileError) {
     // If profile creation fails, we should clean up the auth user
     // But for now, redirect with error - admin can fix manually
-    console.error('Profile creation failed:', profileError)
+    console.error('Profile creation failed:', profileError.message, profileError.code, profileError.details)
     return redirect(`/signup?message=${encodeURIComponent('Account created but profile setup failed. Contact admin.')}`)
   }
 
