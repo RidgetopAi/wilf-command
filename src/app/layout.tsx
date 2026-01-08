@@ -16,6 +16,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Wilf Command",
   description: "Dealer sales tracking and product mix analytics",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Wilf Command",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({
