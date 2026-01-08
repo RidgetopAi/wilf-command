@@ -33,11 +33,15 @@ export async function signup(formData: FormData) {
 
   const supabase = await createClient()
 
+  console.log('Signup attempt for:', email)
+
   // Create auth user
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
   })
+
+  console.log('Auth result:', authError ? `ERROR: ${authError.message}` : `SUCCESS: ${authData.user?.id}`)
 
   if (authError) {
     return redirect(`/signup?message=${encodeURIComponent(authError.message)}`)
