@@ -168,10 +168,10 @@ export function NoteForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-white sm:bg-black/50 sm:flex sm:items-center sm:justify-center touch-none">
-      <div className="h-[100dvh] w-full sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:rounded-xl bg-white overflow-hidden flex flex-col touch-auto">
+    <div className="fixed inset-0 z-50 bg-white sm:bg-black/50 sm:flex sm:items-center sm:justify-center">
+      <div className="h-[100dvh] w-full sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:rounded-xl bg-white grid grid-rows-[auto_1fr_auto]">
         {/* Header */}
-        <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-b bg-gray-50">
+        <div className="flex items-center justify-between px-4 py-2 border-b bg-gray-50">
           <h2 className="text-lg font-semibold text-gray-900">
             {note ? 'Edit Note' : 'New Note'}
           </h2>
@@ -185,7 +185,7 @@ export function NoteForm({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto overscroll-contain min-h-0">
+        <form onSubmit={handleSubmit} className="overflow-y-auto overscroll-contain">
           <div className="p-4 space-y-4">
             {/* Error */}
             {error && (
@@ -345,8 +345,8 @@ export function NoteForm({
           </div>
         </form>
 
-        {/* Footer - sticky at bottom */}
-        <div className="flex-shrink-0 px-4 py-2 border-t bg-gray-50 flex gap-3 safe-area-inset-bottom">
+        {/* Footer */}
+        <div className="px-4 py-2 border-t bg-gray-50 flex gap-3 safe-area-inset-bottom">
           <button
             type="button"
             onClick={onCancel}
