@@ -47,3 +47,9 @@ data/*.xlsx
 
 # LibreOffice lock files
 .~lock.*
+
+# Local data files
+data/*.xls
+data/*.xlsx
+data/*.xls:Zone.Identifier
+data/*.xlsx:Zone.Identifier
