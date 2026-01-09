@@ -168,10 +168,10 @@ export function NoteForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-white sm:bg-black/50 sm:flex sm:items-center sm:justify-center">
-      <div className="h-full w-full sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:rounded-xl bg-white overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 bg-white sm:bg-black/50 sm:flex sm:items-center sm:justify-center touch-none">
+      <div className="h-[100dvh] w-full sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:rounded-xl bg-white overflow-hidden flex flex-col touch-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
+        <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-b bg-gray-50">
           <h2 className="text-lg font-semibold text-gray-900">
             {note ? 'Edit Note' : 'New Note'}
           </h2>
@@ -185,7 +185,7 @@ export function NoteForm({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto overscroll-contain min-h-0">
           <div className="p-4 space-y-4">
             {/* Error */}
             {error && (
@@ -303,7 +303,7 @@ export function NoteForm({
                 value={body}
                 onChange={e => setBody(e.target.value)}
                 placeholder="Enter your note..."
-                rows={6}
+                rows={4}
                 autoFocus
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
               />
@@ -345,12 +345,12 @@ export function NoteForm({
           </div>
         </form>
 
-        {/* Footer */}
-        <div className="px-4 py-3 border-t bg-gray-50 flex gap-3">
+        {/* Footer - sticky at bottom */}
+        <div className="flex-shrink-0 px-4 py-2 border-t bg-gray-50 flex gap-3 safe-area-inset-bottom">
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 active:bg-gray-200"
           >
             Cancel
           </button>
@@ -358,7 +358,7 @@ export function NoteForm({
             type="submit"
             onClick={handleSubmit}
             disabled={isPending || !body.trim() || pendingAttachments.some(p => p.uploading)}
-            className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isPending ? (
               <>
@@ -368,7 +368,7 @@ export function NoteForm({
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                Save Note
+                Save
               </>
             )}
           </button>

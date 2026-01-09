@@ -8,15 +8,18 @@
  * Example:
  *   node scripts/import-dealer-master.mjs data/customer-master-rep-61-20250101.xls
  *
- * Environment variables required:
+ * Environment variables required (loaded from .env.local):
  *   NEXT_PUBLIC_SUPABASE_URL - Your Supabase project URL
  *   SUPABASE_SERVICE_ROLE_KEY - Service role key (from Supabase dashboard -> Settings -> API)
  *
  * The Excel file should have columns: REP, ACCOUNT, NAME, ADDRESS, CITY, ST, ZIP, PHONE, CONTACT
  */
 
+import dotenv from 'dotenv'
+dotenv.config({ path: '.env.local' })
+
 import { createClient } from '@supabase/supabase-js'
-import * as XLSX from 'xlsx'
+import XLSX from 'xlsx'
 import fs from 'fs'
 import path from 'path'
 
