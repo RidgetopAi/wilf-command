@@ -41,7 +41,9 @@ export function DealerTable({ dealers }: DealerTableProps) {
 
   const filteredDealers = dealers.filter(dealer =>
     dealer.dealer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    dealer.account_number.toLowerCase().includes(searchTerm.toLowerCase())
+    dealer.account_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (dealer.city && dealer.city.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (dealer.contact_name && dealer.contact_name.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
   return (
@@ -78,10 +80,13 @@ export function DealerTable({ dealers }: DealerTableProps) {
                     </div>
                     <div className="text-sm text-gray-500">
                       {dealer.account_number}
+                      {dealer.city && dealer.state && (
+                        <span className="ml-2 text-gray-400">· {dealer.city}, {dealer.state}</span>
+                      )}
                     </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {dealer.ew_program || '-'} · {dealer.buying_group || '-'}
-                    </div>
+                    {dealer.contact_name && (
+                      <div className="text-xs text-gray-400 mt-0.5">{dealer.contact_name}</div>
+                    )}
                   </div>
                   <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0 ml-2" />
                 </div>
@@ -115,7 +120,7 @@ export function DealerTable({ dealers }: DealerTableProps) {
                 Dealer
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Program
+                Location
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <span className="text-emerald-600">Ours (Segments)</span>
@@ -144,8 +149,12 @@ export function DealerTable({ dealers }: DealerTableProps) {
                     </Link>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{dealer.ew_program || '-'}</div>
-                    <div className="text-xs text-gray-500">{dealer.buying_group || ''}</div>
+                    <div className="text-sm text-gray-900">
+                      {dealer.city && dealer.state ? `${dealer.city}, ${dealer.state}` : '-'}
+                    </div>
+                    {dealer.contact_name && (
+                      <div className="text-xs text-gray-500">{dealer.contact_name}</div>
+                    )}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
                     {segments.length > 0 ? (

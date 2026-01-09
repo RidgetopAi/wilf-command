@@ -19,7 +19,15 @@ export interface Dealer {
   location_count: number
   ew_program: string | null
   buying_group: string | null
-  
+
+  // Contact Information (from customer master)
+  address: string | null
+  city: string | null
+  state: string | null
+  zip: string | null
+  phone: string | null
+  contact_name: string | null
+
   // Market Segments (engaged + active with us + note)
   retail: boolean
   retail_active: boolean

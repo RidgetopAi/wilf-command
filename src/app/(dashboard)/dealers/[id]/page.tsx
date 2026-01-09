@@ -3,7 +3,7 @@ import { getDisplays, getDealerDisplays } from '@/lib/api/displays'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ProductMixDashboard } from '@/components/product-mix/ProductMixDashboard'
-import { Settings, FileText, ClipboardCheck, BarChart3 } from 'lucide-react'
+import { Settings, FileText, ClipboardCheck, BarChart3, MapPin, Phone, User } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +30,27 @@ export default async function DealerDetailPage(props: { params: Promise<{ id: st
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{dealer.dealer_name}</h1>
           <p className="text-sm text-gray-500">Account #{dealer.account_number}</p>
+          {/* Contact Info Row */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
+            {dealer.city && dealer.state && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5" />
+                {dealer.city}, {dealer.state}
+              </span>
+            )}
+            {dealer.phone && (
+              <a href={`tel:${dealer.phone}`} className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800">
+                <Phone className="h-3.5 w-3.5" />
+                {dealer.phone}
+              </a>
+            )}
+            {dealer.contact_name && (
+              <span className="flex items-center gap-1">
+                <User className="h-3.5 w-3.5" />
+                {dealer.contact_name}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
           <Link
