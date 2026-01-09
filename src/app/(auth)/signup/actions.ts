@@ -26,6 +26,11 @@ export async function signup(formData: FormData) {
     return redirect('/signup?message=Rep ID is required')
   }
 
+  // Validate rep_id is numeric
+  if (!/^\d+$/.test(repId.trim())) {
+    return redirect('/signup?message=Rep ID must be a number')
+  }
+
   // Password strength check
   if (password.length < 8) {
     return redirect('/signup?message=Password must be at least 8 characters')
@@ -65,7 +70,7 @@ export async function signup(formData: FormData) {
       id: authData.user.id,
       email: email.toLowerCase(),
       full_name: fullName.trim(),
-      rep_id: repId.trim().toUpperCase(),
+      rep_id: repId.trim(),
       role: 'rep',
     })
 

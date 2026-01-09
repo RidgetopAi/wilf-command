@@ -66,12 +66,14 @@ export default async function SignupPage(props: {
                   id="rep_id"
                   name="rep_id"
                   type="text"
+                  inputMode="numeric"
+                  pattern="\d+"
                   required
-                  placeholder="JSMITH"
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm uppercase"
+                  placeholder="95"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-500">Your Sales-I rep identifier</p>
+              <p className="mt-1 text-xs text-gray-500">Your numeric Sales-I rep ID</p>
             </div>
 
             <div>
