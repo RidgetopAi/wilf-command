@@ -168,8 +168,8 @@ export function NoteForm({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-white sm:bg-black/50 sm:flex sm:items-center sm:justify-center overflow-hidden">
-      <div className="absolute inset-0 sm:relative sm:inset-auto sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:rounded-xl bg-white grid grid-rows-[auto_1fr_auto]">
+    <div className="fixed inset-0 z-[100] bg-white sm:bg-black/50 sm:flex sm:items-center sm:justify-center">
+      <div className="absolute inset-0 h-full sm:relative sm:inset-auto sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:rounded-xl bg-white grid grid-rows-[auto_1fr_auto] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2 border-b bg-gray-50">
           <h2 className="text-lg font-semibold text-gray-900">
@@ -185,7 +185,7 @@ export function NoteForm({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="overflow-y-auto overscroll-contain">
+        <form onSubmit={handleSubmit} className="overflow-y-auto overscroll-contain min-h-0">
           <div className="p-4 space-y-4">
             {/* Error */}
             {error && (
