@@ -151,7 +151,7 @@ function drawHorizontalBarChart(
     doc.setFillColor(209, 213, 219)
     doc.rect(chartMarginLeft, barY + barHeight, Math.max(priorBarWidth, 1), barHeight - 1, 'F')
 
-    // Value labels
+    // Value labels - Current year
     doc.setFontSize(5)
     if (currentBarWidth > 20) {
       doc.setTextColor(255)
@@ -159,6 +159,15 @@ function drawHorizontalBarChart(
     } else {
       doc.setTextColor(80)
       doc.text(formatCurrencyCompact(item.current_sales), chartMarginLeft + currentBarWidth + 2, barY + 4)
+    }
+
+    // Value labels - Prior year
+    if (priorBarWidth > 20) {
+      doc.setTextColor(100)
+      doc.text(formatCurrencyCompact(item.prior_sales), chartMarginLeft + priorBarWidth - 2, barY + barHeight + 4, { align: 'right' })
+    } else {
+      doc.setTextColor(100)
+      doc.text(formatCurrencyCompact(item.prior_sales), chartMarginLeft + priorBarWidth + 2, barY + barHeight + 4)
     }
   })
 
@@ -275,22 +284,22 @@ export function exportProductGroupsToPDF(
     // Logo failed to load, continue without it
   }
 
-  // Title (centered, accounting for logo)
+  // Title (centered on page)
   doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(0)
-  doc.text('Product Group Sales Report', pageWidth / 2 + 10, 18, { align: 'center' })
+  doc.text('Product Group Sales Report', pageWidth / 2, 18, { align: 'center' })
 
   // Dealer info
   doc.setFontSize(11)
   doc.setFont('helvetica', 'normal')
-  doc.text(`${options.dealerName}`, pageWidth / 2 + 10, 26, { align: 'center' })
+  doc.text(`${options.dealerName}`, pageWidth / 2, 26, { align: 'center' })
   doc.setFontSize(9)
-  doc.text(`Account #${options.accountNumber}`, pageWidth / 2 + 10, 32, { align: 'center' })
+  doc.text(`Account #${options.accountNumber}`, pageWidth / 2, 32, { align: 'center' })
 
   // Period
   const periodLabel = getPeriodLabel(options.periodType, options.year, options.month)
-  doc.text(`Period: ${periodLabel}`, pageWidth / 2 + 10, 38, { align: 'center' })
+  doc.text(`Period: ${periodLabel}`, pageWidth / 2, 38, { align: 'center' })
 
   // Report date
   doc.setFontSize(8)
