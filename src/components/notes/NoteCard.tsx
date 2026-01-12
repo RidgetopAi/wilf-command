@@ -2,6 +2,7 @@
 
 import { Note, NOTE_TYPE_LABELS } from '@/types'
 import { Calendar, Paperclip, Clock, Store } from 'lucide-react'
+import { Linkify } from '@/lib/utils/linkify'
 
 interface NoteCardProps {
   note: Note
@@ -71,7 +72,7 @@ export function NoteCard({ note, onClick, showDealer }: NoteCardProps) {
 
       {/* Body preview */}
       <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-        {note.body}
+        <Linkify text={note.body} />
       </p>
 
       {/* Footer: Tags, attachments, follow-up */}

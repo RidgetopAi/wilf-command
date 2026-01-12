@@ -4,6 +4,7 @@ import { Note, NOTE_TYPE_LABELS } from '@/types'
 import { AttachmentPreview } from './AttachmentPreview'
 import { X, Calendar, Clock, Edit2, Trash2, FileText, FileDown } from 'lucide-react'
 import { exportNoteAsText, exportNoteAsPdf } from '@/lib/utils/noteExport'
+import { Linkify } from '@/lib/utils/linkify'
 
 interface NoteDetailDrawerProps {
   note: Note
@@ -100,7 +101,7 @@ export function NoteDetailDrawer({
             {/* Body */}
             <div className="prose prose-sm max-w-none">
               <p className="text-gray-700 whitespace-pre-wrap">
-                {note.body}
+                <Linkify text={note.body} />
               </p>
             </div>
 
