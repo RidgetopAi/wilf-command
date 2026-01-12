@@ -5,6 +5,7 @@ import { Display, ProductMixMonthly, DisplayCategory } from '@/types'
 interface DisplaySalesChartProps {
   displays: Display[]
   monthlyData: ProductMixMonthly[]
+  year: number
 }
 
 // Map display category to the sales field in ProductMixMonthly
@@ -37,7 +38,7 @@ const formatDollars = (value: number) => {
   return '-'
 }
 
-export function DisplaySalesChart({ displays, monthlyData }: DisplaySalesChartProps) {
+export function DisplaySalesChart({ displays, monthlyData, year }: DisplaySalesChartProps) {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
   // Create a map of month -> data for quick lookup
@@ -46,8 +47,13 @@ export function DisplaySalesChart({ displays, monthlyData }: DisplaySalesChartPr
     dataByMonth[d.month] = d
   })
 
-  // Get current month to know which months should have data
-  const currentMonth = new Date().getMonth() + 1 // 1-indexed
+  // Determine which months are "future" based on the viewed year
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth() + 1 // 1-indexed
+
+  // If viewing a past year, no months are future. If current year, use current month.
+  const lastDataMonth = year < currentYear ? 12 : currentMonth
 
   if (displays.length === 0) {
     return (
@@ -77,7 +83,7 @@ export function DisplaySalesChart({ displays, monthlyData }: DisplaySalesChartPr
               <th
                 key={month}
                 className={`text-center py-2 px-2 font-medium min-w-[60px] ${
-                  idx + 1 > currentMonth ? 'text-gray-300' : 'text-gray-700'
+                  idx + 1 > lastDataMonth ? 'text-gray-300' : 'text-gray-700'
                 }`}
               >
                 {month}
@@ -112,8 +118,8 @@ export function DisplaySalesChart({ displays, monthlyData }: DisplaySalesChartPr
                     const monthNum = monthIdx + 1
                     const monthData = dataByMonth[monthNum]
                     const sales = monthData ? Number(monthData[salesField]) || 0 : 0
-                    const isFutureMonth = monthNum > currentMonth
-                    const isInactive = !isFutureMonth && sales === 0 && monthNum <= currentMonth
+                    const isFutureMonth = monthNum > lastDataMonth
+                    const isInactive = !isFutureMonth && sales === 0 && monthNum <= lastDataMonth
 
                     return (
                       <td

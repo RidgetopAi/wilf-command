@@ -118,7 +118,7 @@ export function ProductMixDashboard({ repId, accountNumber, displays = [] }: Pro
       {displays.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Display Productivity</h3>
-          <DisplaySalesChart displays={displays} monthlyData={mixData} />
+          <DisplaySalesChart displays={displays} monthlyData={mixData} year={year} />
         </div>
       )}
     </div>
