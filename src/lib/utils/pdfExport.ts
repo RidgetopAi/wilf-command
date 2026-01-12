@@ -426,6 +426,6 @@ export function exportProductGroupsToPDF(
   }
 
   // Save the PDF
-  const fileName = `${options.dealerName.replace(/[^a-z0-9]/gi, '_')}_Product_Groups_${periodLabel.replace(/\s+/g, '_')}.pdf`
+  const fileName = `${options.accountNumber.replace(/[^a-z0-9]/gi, '')}_Product_Groups_${periodLabel.replace(/\s+/g, '_')}.pdf`
   doc.save(fileName)
 }
