@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import type { StopSheetSection, StopSheetTemplate, StopSheet, StopSheetItem } from '@/types'
+import type { StopSheetSection, StopSheetTemplate, StopSheet, StopSheetItem, Note, NoteType } from '@/types'
 
 // =============================================
 // TEMPLATE ACTIONS
@@ -24,7 +24,17 @@ export async function getTemplateItems(): Promise<StopSheetTemplate[]> {
 
   const { data, error } = await supabase
     .from('stopsheet_templates')
-    .select('*')
+    .select(`
+      *,
+      linked_note:notes(
+        id,
+        title,
+        type,
+        body,
+        visit_date,
+        attachments:note_attachments(id, file_name, mime_type)
+      )
+    `)
     .eq('rep_id', userData.rep_id)
     .eq('is_active', true)
     .order('section')
@@ -150,6 +160,45 @@ export async function reorderTemplateItems(
   return { success: true }
 }
 
+export async function linkNoteToTemplate(
+  templateId: string,
+  noteId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('stopsheet_templates')
+    .update({ note_id: noteId, updated_at: new Date().toISOString() })
+    .eq('id', templateId)
+
+  if (error) {
+    console.error('Failed to link note to template:', error)
+    return { success: false, error: 'Failed to link note' }
+  }
+
+  revalidatePath('/stopsheet/editor')
+  return { success: true }
+}
+
+export async function unlinkNoteFromTemplate(
+  templateId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('stopsheet_templates')
+    .update({ note_id: null, updated_at: new Date().toISOString() })
+    .eq('id', templateId)
+
+  if (error) {
+    console.error('Failed to unlink note from template:', error)
+    return { success: false, error: 'Failed to unlink note' }
+  }
+
+  revalidatePath('/stopsheet/editor')
+  return { success: true }
+}
+
 // =============================================
 // STOPSHEET ACTIONS
 // =============================================
@@ -203,7 +252,8 @@ export async function createStopSheet(
       template_item_id: t.id,
       section: t.section,
       label: t.label,
-      sort_order: t.sort_order
+      sort_order: t.sort_order,
+      note_id: t.note_id || null
     }))
 
     const { error: itemsError } = await supabase
@@ -227,7 +277,17 @@ export async function getStopSheet(id: string): Promise<StopSheet | null> {
     .select(`
       *,
       dealer:dealers(id, dealer_name, account_number),
-      items:stopsheet_items(*)
+      items:stopsheet_items(
+        *,
+        linked_note:notes(
+          id,
+          title,
+          type,
+          body,
+          visit_date,
+          attachments:note_attachments(*)
+        )
+      )
     `)
     .eq('id', id)
     .single()
@@ -400,4 +460,123 @@ export async function deleteStopSheet(id: string): Promise<{ success: boolean; e
 
   revalidatePath('/stopsheet')
   return { success: true }
+}
+
+// =============================================
+// NOTE LINKING ACTIONS
+// =============================================
+
+export async function linkNoteToStopSheetItem(
+  itemId: string,
+  noteId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('stopsheet_items')
+    .update({ note_id: noteId })
+    .eq('id', itemId)
+
+  if (error) {
+    console.error('Failed to link note to item:', error)
+    return { success: false, error: 'Failed to link note' }
+  }
+
+  return { success: true }
+}
+
+export async function unlinkNoteFromStopSheetItem(
+  itemId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('stopsheet_items')
+    .update({ note_id: null })
+    .eq('id', itemId)
+
+  if (error) {
+    console.error('Failed to unlink note from item:', error)
+    return { success: false, error: 'Failed to unlink note' }
+  }
+
+  return { success: true }
+}
+
+export async function getNotesForLinking(
+  dealerId: string,
+  typeFilter?: NoteType,
+  search?: string
+): Promise<Note[]> {
+  const supabase = await createClient()
+
+  let query = supabase
+    .from('notes')
+    .select(`
+      id,
+      title,
+      type,
+      body,
+      visit_date,
+      attachments:note_attachments(id, file_name, mime_type)
+    `)
+    .eq('dealer_id', dealerId)
+    .order('visit_date', { ascending: false })
+    .limit(50)
+
+  if (typeFilter) {
+    query = query.eq('type', typeFilter)
+  }
+
+  if (search) {
+    query = query.or(`title.ilike.%${search}%,body.ilike.%${search}%`)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error('Failed to fetch notes for linking:', error)
+    return []
+  }
+
+  return data as Note[]
+}
+
+export async function getNotesForTemplateLink(
+  typeFilter?: NoteType,
+  search?: string
+): Promise<Note[]> {
+  const supabase = await createClient()
+
+  // Get notes without dealer_id (global/promotion notes)
+  let query = supabase
+    .from('notes')
+    .select(`
+      id,
+      title,
+      type,
+      body,
+      visit_date,
+      attachments:note_attachments(id, file_name, mime_type)
+    `)
+    .is('dealer_id', null)
+    .order('visit_date', { ascending: false })
+    .limit(50)
+
+  if (typeFilter) {
+    query = query.eq('type', typeFilter)
+  }
+
+  if (search) {
+    query = query.or(`title.ilike.%${search}%,body.ilike.%${search}%`)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error('Failed to fetch notes for template linking:', error)
+    return []
+  }
+
+  return data as Note[]
 }

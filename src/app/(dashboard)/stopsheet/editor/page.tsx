@@ -4,18 +4,32 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, ClipboardCheck } from 'lucide-react'
 import { TemplateEditor } from '@/components/stopsheet/TemplateEditor'
+import { NoteLinkModal } from '@/components/stopsheet/NoteLinkModal'
+import { NoteDetailDrawer } from '@/components/notes/NoteDetailDrawer'
 import {
   getTemplateItems,
   createTemplateItem,
   updateTemplateItem,
   deleteTemplateItem,
-  reorderTemplateItems
+  reorderTemplateItems,
+  linkNoteToTemplate,
+  unlinkNoteFromTemplate,
+  getNotesForTemplateLink
 } from '../actions'
-import type { StopSheetTemplate, StopSheetSection } from '@/types'
+import type { StopSheetTemplate, StopSheetSection, Note, NoteType } from '@/types'
 
 export default function StopSheetEditorPage() {
   const [items, setItems] = useState<StopSheetTemplate[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  // Note linking state
+  const [linkModalOpen, setLinkModalOpen] = useState(false)
+  const [linkingTemplateId, setLinkingTemplateId] = useState<string | null>(null)
+  const [notesForLink, setNotesForLink] = useState<Note[]>([])
+  const [isLoadingNotes, setIsLoadingNotes] = useState(false)
+  const [noteTypeFilter, setNoteTypeFilter] = useState<NoteType | ''>('promotion')
+  const [noteSearchQuery, setNoteSearchQuery] = useState('')
+  const [viewingNote, setViewingNote] = useState<Note | null>(null)
 
   const loadItems = useCallback(async () => {
     const data = await getTemplateItems()
@@ -26,6 +40,20 @@ export default function StopSheetEditorPage() {
   useEffect(() => {
     loadItems()
   }, [loadItems])
+
+  // Load notes when link modal opens or filters change
+  useEffect(() => {
+    if (linkModalOpen) {
+      setIsLoadingNotes(true)
+      getNotesForTemplateLink(
+        noteTypeFilter || undefined,
+        noteSearchQuery || undefined
+      ).then(notes => {
+        setNotesForLink(notes)
+        setIsLoadingNotes(false)
+      })
+    }
+  }, [linkModalOpen, noteTypeFilter, noteSearchQuery])
 
   const handleAdd = async (section: StopSheetSection, label: string) => {
     const result = await createTemplateItem(section, label)
@@ -67,6 +95,37 @@ export default function StopSheetEditorPage() {
     await reorderTemplateItems(section, itemIds)
   }
 
+  // Note linking handlers
+  const handleOpenLinkModal = (templateId: string) => {
+    setLinkingTemplateId(templateId)
+    setLinkModalOpen(true)
+  }
+
+  const handleLinkNote = async (noteId: string) => {
+    if (!linkingTemplateId) return
+
+    const result = await linkNoteToTemplate(linkingTemplateId, noteId)
+    if (result.success) {
+      // Refresh items to get updated data with linked note
+      loadItems()
+    }
+    setLinkModalOpen(false)
+    setLinkingTemplateId(null)
+  }
+
+  const handleUnlinkNote = async (templateId: string) => {
+    const result = await unlinkNoteFromTemplate(templateId)
+    if (result.success) {
+      setItems(prev => prev.map(i =>
+        i.id === templateId ? { ...i, note_id: null, linked_note: undefined } : i
+      ))
+    }
+  }
+
+  const handleViewNote = (note: Note) => {
+    setViewingNote(note)
+  }
+
   return (
     <div className="p-4 sm:p-6 max-w-2xl mx-auto">
       {/* Header */}
@@ -86,7 +145,7 @@ export default function StopSheetEditorPage() {
       {/* Instructions */}
       <p className="text-sm text-gray-600 mb-6">
         Configure your checklist items. These will be copied to each new StopSheet.
-        Drag to reorder, click to edit.
+        Drag to reorder, click to edit. Use the link icon to attach notes with promos or resources.
       </p>
 
       {/* Editor */}
@@ -116,6 +175,34 @@ export default function StopSheetEditorPage() {
           onUpdate={handleUpdate}
           onDelete={handleDelete}
           onReorder={handleReorder}
+          onLinkNote={handleOpenLinkModal}
+          onViewNote={handleViewNote}
+          onUnlinkNote={handleUnlinkNote}
+        />
+      )}
+
+      {/* Note Link Modal */}
+      <NoteLinkModal
+        isOpen={linkModalOpen}
+        onClose={() => {
+          setLinkModalOpen(false)
+          setLinkingTemplateId(null)
+        }}
+        onSelect={handleLinkNote}
+        notes={notesForLink}
+        isLoading={isLoadingNotes}
+        typeFilter={noteTypeFilter}
+        onTypeFilterChange={setNoteTypeFilter}
+        searchQuery={noteSearchQuery}
+        onSearchChange={setNoteSearchQuery}
+        title="Link a Note to Template"
+      />
+
+      {/* Note Detail Drawer */}
+      {viewingNote && (
+        <NoteDetailDrawer
+          note={viewingNote}
+          onClose={() => setViewingNote(null)}
         />
       )}
     </div>

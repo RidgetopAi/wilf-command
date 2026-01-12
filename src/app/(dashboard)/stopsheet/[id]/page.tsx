@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Lock, Unlock, FileDown, ClipboardCheck, Trash2 } from 'lucide-react'
 import { StopSheetItem } from '@/components/stopsheet/StopSheetItem'
+import { NoteLinkModal } from '@/components/stopsheet/NoteLinkModal'
+import { NoteDetailDrawer } from '@/components/notes/NoteDetailDrawer'
 import { exportStopSheetAsPdf } from '@/lib/utils/stopsheetExport'
 import {
   getStopSheet,
@@ -12,9 +14,12 @@ import {
   updateStopSheetItemNotes,
   completeStopSheet,
   unlockStopSheet,
-  deleteStopSheet
+  deleteStopSheet,
+  linkNoteToStopSheetItem,
+  unlinkNoteFromStopSheetItem,
+  getNotesForLinking
 } from '../actions'
-import type { StopSheet, StopSheetItem as StopSheetItemType } from '@/types'
+import type { StopSheet, StopSheetItem as StopSheetItemType, Note, NoteType } from '@/types'
 
 export default function StopSheetExecutionPage({
   params
@@ -31,6 +36,15 @@ export default function StopSheetExecutionPage({
   const [showUnlockConfirm, setShowUnlockConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
+  // Note linking state
+  const [linkModalOpen, setLinkModalOpen] = useState(false)
+  const [linkingItemId, setLinkingItemId] = useState<string | null>(null)
+  const [notesForLink, setNotesForLink] = useState<Note[]>([])
+  const [isLoadingNotes, setIsLoadingNotes] = useState(false)
+  const [noteTypeFilter, setNoteTypeFilter] = useState<NoteType | ''>('promotion')
+  const [noteSearchQuery, setNoteSearchQuery] = useState('')
+  const [viewingNote, setViewingNote] = useState<Note | null>(null)
+
   const loadStopsheet = useCallback(async (id: string) => {
     const data = await getStopSheet(id)
     setStopsheet(data)
@@ -45,6 +59,21 @@ export default function StopSheetExecutionPage({
     }
     init()
   }, [params, loadStopsheet])
+
+  // Load notes when link modal opens or filters change
+  useEffect(() => {
+    if (linkModalOpen && stopsheet?.dealer_id) {
+      setIsLoadingNotes(true)
+      getNotesForLinking(
+        stopsheet.dealer_id,
+        noteTypeFilter || undefined,
+        noteSearchQuery || undefined
+      ).then(notes => {
+        setNotesForLink(notes)
+        setIsLoadingNotes(false)
+      })
+    }
+  }, [linkModalOpen, stopsheet?.dealer_id, noteTypeFilter, noteSearchQuery])
 
   const handleToggle = async (itemId: string, isChecked: boolean) => {
     // Optimistic update
@@ -101,6 +130,43 @@ export default function StopSheetExecutionPage({
       setIsDeleting(false)
       setShowDeleteConfirm(false)
     }
+  }
+
+  // Note linking handlers
+  const handleOpenLinkModal = (itemId: string) => {
+    setLinkingItemId(itemId)
+    setLinkModalOpen(true)
+  }
+
+  const handleLinkNote = async (noteId: string) => {
+    if (!linkingItemId) return
+
+    const result = await linkNoteToStopSheetItem(linkingItemId, noteId)
+    if (result.success) {
+      // Refresh stopsheet to get updated data
+      loadStopsheet(stopsheetId)
+    }
+    setLinkModalOpen(false)
+    setLinkingItemId(null)
+  }
+
+  const handleUnlinkNote = async (itemId: string) => {
+    const result = await unlinkNoteFromStopSheetItem(itemId)
+    if (result.success) {
+      setStopsheet(prev => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          items: prev.items?.map(i =>
+            i.id === itemId ? { ...i, note_id: null, linked_note: undefined } : i
+          )
+        }
+      })
+    }
+  }
+
+  const handleViewNote = (note: Note) => {
+    setViewingNote(note)
   }
 
   if (isLoading) {
@@ -187,6 +253,9 @@ export default function StopSheetExecutionPage({
                 disabled={isLocked}
                 onToggle={handleToggle}
                 onUpdateNotes={handleUpdateNotes}
+                onLinkNote={handleOpenLinkModal}
+                onViewNote={handleViewNote}
+                onUnlinkNote={handleUnlinkNote}
               />
             ))}
           </div>
@@ -205,6 +274,9 @@ export default function StopSheetExecutionPage({
                 disabled={isLocked}
                 onToggle={handleToggle}
                 onUpdateNotes={handleUpdateNotes}
+                onLinkNote={handleOpenLinkModal}
+                onViewNote={handleViewNote}
+                onUnlinkNote={handleUnlinkNote}
               />
             ))}
           </div>
@@ -342,6 +414,30 @@ export default function StopSheetExecutionPage({
             </div>
           </div>
         </>
+      )}
+
+      {/* Note Link Modal */}
+      <NoteLinkModal
+        isOpen={linkModalOpen}
+        onClose={() => {
+          setLinkModalOpen(false)
+          setLinkingItemId(null)
+        }}
+        onSelect={handleLinkNote}
+        notes={notesForLink}
+        isLoading={isLoadingNotes}
+        typeFilter={noteTypeFilter}
+        onTypeFilterChange={setNoteTypeFilter}
+        searchQuery={noteSearchQuery}
+        onSearchChange={setNoteSearchQuery}
+      />
+
+      {/* Note Detail Drawer */}
+      {viewingNote && (
+        <NoteDetailDrawer
+          note={viewingNote}
+          onClose={() => setViewingNote(null)}
+        />
       )}
     </div>
   )

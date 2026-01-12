@@ -170,16 +170,17 @@ export interface InactiveAduraDealer {
 // NOTES SYSTEM TYPES
 // =============================================
 
-export type NoteType = 
-  | 'visit' 
-  | 'follow_up' 
-  | 'vp' 
-  | 'opportunity' 
+export type NoteType =
+  | 'visit'
+  | 'follow_up'
+  | 'vp'
+  | 'opportunity'
   | 'plan'
-  | 'issue' 
-  | 'quote' 
-  | 'order' 
+  | 'issue'
+  | 'quote'
+  | 'order'
   | 'personal'
+  | 'promotion'
 
 export const NOTE_TYPE_LABELS: Record<NoteType, string> = {
   visit: 'Visit',
@@ -190,7 +191,8 @@ export const NOTE_TYPE_LABELS: Record<NoteType, string> = {
   issue: 'Issue',
   quote: 'Quote',
   order: 'Order',
-  personal: 'Personal'
+  personal: 'Personal',
+  promotion: 'Promotion'
 }
 
 export interface Note {
@@ -398,6 +400,9 @@ export interface StopSheetTemplate {
   is_active: boolean
   created_at: string
   updated_at: string
+  note_id: string | null
+  // Joined data
+  linked_note?: Note
 }
 
 export interface StopSheet {
@@ -425,6 +430,9 @@ export interface StopSheetItem {
   notes: string | null
   sort_order: number
   created_at: string
+  note_id: string | null
+  // Joined data
+  linked_note?: Note
 }
 
 // =============================================

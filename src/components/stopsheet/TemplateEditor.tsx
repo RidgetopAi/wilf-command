@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/sortable'
 import { Plus } from 'lucide-react'
 import { TemplateItem } from './TemplateItem'
-import type { StopSheetTemplate, StopSheetSection } from '@/types'
+import type { StopSheetTemplate, StopSheetSection, Note } from '@/types'
 
 interface TemplateSectionProps {
   title: string
@@ -27,6 +27,9 @@ interface TemplateSectionProps {
   onUpdate: (id: string, label: string) => Promise<void>
   onDelete: (id: string) => Promise<void>
   onReorder: (section: StopSheetSection, itemIds: string[]) => Promise<void>
+  onLinkNote?: (id: string) => void
+  onViewNote?: (note: Note) => void
+  onUnlinkNote?: (id: string) => Promise<void>
 }
 
 function TemplateSection({
@@ -36,7 +39,10 @@ function TemplateSection({
   onAdd,
   onUpdate,
   onDelete,
-  onReorder
+  onReorder,
+  onLinkNote,
+  onViewNote,
+  onUnlinkNote
 }: TemplateSectionProps) {
   const [newItemLabel, setNewItemLabel] = useState('')
   const [isAdding, setIsAdding] = useState(false)
@@ -96,6 +102,9 @@ function TemplateSection({
                   item={item}
                   onUpdate={onUpdate}
                   onDelete={onDelete}
+                  onLinkNote={onLinkNote}
+                  onViewNote={onViewNote}
+                  onUnlinkNote={onUnlinkNote}
                 />
               ))
             )}
@@ -130,6 +139,9 @@ interface TemplateEditorProps {
   onUpdate: (id: string, label: string) => Promise<void>
   onDelete: (id: string) => Promise<void>
   onReorder: (section: StopSheetSection, itemIds: string[]) => Promise<void>
+  onLinkNote?: (id: string) => void
+  onViewNote?: (note: Note) => void
+  onUnlinkNote?: (id: string) => Promise<void>
 }
 
 export function TemplateEditor({
@@ -137,7 +149,10 @@ export function TemplateEditor({
   onAdd,
   onUpdate,
   onDelete,
-  onReorder
+  onReorder,
+  onLinkNote,
+  onViewNote,
+  onUnlinkNote
 }: TemplateEditorProps) {
   const basicsItems = items.filter(i => i.section === 'basics')
   const objectivesItems = items.filter(i => i.section === 'objectives')
@@ -152,6 +167,9 @@ export function TemplateEditor({
         onUpdate={onUpdate}
         onDelete={onDelete}
         onReorder={onReorder}
+        onLinkNote={onLinkNote}
+        onViewNote={onViewNote}
+        onUnlinkNote={onUnlinkNote}
       />
 
       <TemplateSection
@@ -162,6 +180,9 @@ export function TemplateEditor({
         onUpdate={onUpdate}
         onDelete={onDelete}
         onReorder={onReorder}
+        onLinkNote={onLinkNote}
+        onViewNote={onViewNote}
+        onUnlinkNote={onUnlinkNote}
       />
     </div>
   )
