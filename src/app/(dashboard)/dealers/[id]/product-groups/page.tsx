@@ -6,6 +6,7 @@ import { ArrowLeft, BarChart3, Loader2, FileDown } from 'lucide-react'
 import { PeriodType, Dealer } from '@/types'
 import { PeriodSelector, ProductGroupChart, ProductGroupTable } from '@/components/product-groups'
 import { useProductGroupComparison } from '@/lib/hooks/useProductGroupSales'
+import { useProductMix } from '@/lib/hooks'
 import { createClient } from '@/lib/supabase/client'
 import { exportProductGroupsToPDF } from '@/lib/utils/pdfExport'
 
@@ -59,6 +60,15 @@ export default function ProductGroupsPage({ params }: ProductGroupsPageProps) {
     month
   )
 
+  // Fetch monthly product mix data for the PDF export
+  const {
+    data: monthlyMixData = []
+  } = useProductMix(
+    dealer?.rep_id || '',
+    dealer?.account_number || '',
+    year
+  )
+
   const isLoading = isLoadingDealer || isLoadingData
 
   const handleExportPDF = () => {
@@ -69,7 +79,8 @@ export default function ProductGroupsPage({ params }: ProductGroupsPageProps) {
       accountNumber: dealer.account_number,
       periodType,
       year,
-      month
+      month,
+      monthlyMixData
     })
   }
 
