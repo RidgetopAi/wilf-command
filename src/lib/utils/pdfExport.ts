@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { ProductGroupSummary, PeriodType, ProductMixMonthly } from '@/types'
+import { ELIAS_WILF_LOGO } from './logoBase64'
 
 interface ExportOptions {
   dealerName: string
@@ -88,11 +89,11 @@ function drawHorizontalBarChart(
   maxItems: number = 10
 ): number {
   const pageWidth = doc.internal.pageSize.getWidth()
-  const chartMarginLeft = 60
-  const chartMarginRight = 20
+  const chartMarginLeft = 55
+  const chartMarginRight = 15
   const chartWidth = pageWidth - chartMarginLeft - chartMarginRight
-  const barHeight = 12
-  const barGap = 4
+  const barHeight = 6  // Reduced from 12
+  const barGap = 2     // Reduced from 4
   const chartData = data.slice(0, maxItems)
 
   // Find max value for scaling
@@ -100,23 +101,32 @@ function drawHorizontalBarChart(
 
   let currentY = startY
 
-  // Draw chart title
+  // Draw section title
   doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(0)
   doc.text('Sales by Product Group (vs Prior Year)', 14, currentY)
-  currentY += 8
+  currentY += 6
+
+  // Draw border around chart area
+  const chartAreaHeight = chartData.length * (barHeight * 2 + barGap) + 20
+  doc.setDrawColor(200, 200, 200)
+  doc.setLineWidth(0.5)
+  doc.rect(14, currentY - 2, pageWidth - 28, chartAreaHeight)
+
+  currentY += 4
 
   // Draw legend
   doc.setFontSize(7)
   doc.setFont('helvetica', 'normal')
   doc.setFillColor(79, 70, 229)
-  doc.rect(14, currentY - 3, 8, 4, 'F')
-  doc.text('Current Year', 24, currentY)
+  doc.rect(18, currentY - 3, 8, 4, 'F')
+  doc.setTextColor(0)
+  doc.text('Current Year', 28, currentY)
   doc.setFillColor(209, 213, 219)
   doc.rect(60, currentY - 3, 8, 4, 'F')
   doc.text('Prior Year', 70, currentY)
-  currentY += 8
+  currentY += 6
 
   // Draw bars
   chartData.forEach((item, idx) => {
@@ -125,35 +135,34 @@ function drawHorizontalBarChart(
     const barY = currentY + idx * (barHeight * 2 + barGap)
 
     // Product name
-    doc.setFontSize(7)
+    doc.setFontSize(6)
     doc.setTextColor(50)
-    const truncatedName = item.product_group.length > 18
-      ? item.product_group.substring(0, 15) + '...'
+    const truncatedName = item.product_group.length > 20
+      ? item.product_group.substring(0, 17) + '...'
       : item.product_group
-    doc.text(truncatedName, chartMarginLeft - 2, barY + 4, { align: 'right' })
+    doc.text(truncatedName, chartMarginLeft - 2, barY + 3, { align: 'right' })
 
     // Current year bar (colored by category)
     const color = CATEGORY_COLORS[item.category] || CATEGORY_COLORS['']
     doc.setFillColor(color[0], color[1], color[2])
-    doc.rect(chartMarginLeft, barY, currentBarWidth, barHeight - 2, 'F')
+    doc.rect(chartMarginLeft, barY, Math.max(currentBarWidth, 1), barHeight - 1, 'F')
 
     // Prior year bar (gray)
     doc.setFillColor(209, 213, 219)
-    doc.rect(chartMarginLeft, barY + barHeight - 1, priorBarWidth, barHeight - 2, 'F')
+    doc.rect(chartMarginLeft, barY + barHeight, Math.max(priorBarWidth, 1), barHeight - 1, 'F')
 
     // Value labels
-    doc.setFontSize(6)
-    doc.setTextColor(80)
-    if (currentBarWidth > 25) {
+    doc.setFontSize(5)
+    if (currentBarWidth > 20) {
       doc.setTextColor(255)
-      doc.text(formatCurrencyCompact(item.current_sales), chartMarginLeft + currentBarWidth - 2, barY + 5, { align: 'right' })
+      doc.text(formatCurrencyCompact(item.current_sales), chartMarginLeft + currentBarWidth - 2, barY + 4, { align: 'right' })
     } else {
       doc.setTextColor(80)
-      doc.text(formatCurrencyCompact(item.current_sales), chartMarginLeft + currentBarWidth + 2, barY + 5)
+      doc.text(formatCurrencyCompact(item.current_sales), chartMarginLeft + currentBarWidth + 2, barY + 4)
     }
   })
 
-  return currentY + chartData.length * (barHeight * 2 + barGap) + 10
+  return currentY + chartData.length * (barHeight * 2 + barGap) + 8
 }
 
 function drawMonthlyMixGrid(
@@ -257,40 +266,41 @@ export function exportProductGroupsToPDF(
     ? ((totals.current - totals.prior) / totals.prior) * 100
     : (totals.current > 0 ? 100 : 0)
 
-  // === PAGE 1: Header + Chart + Summary Table ===
+  // === HEADER WITH LOGO ===
 
-  // Title
-  doc.setFontSize(18)
+  // Add logo (top left)
+  try {
+    doc.addImage(ELIAS_WILF_LOGO, 'PNG', 14, 10, 25, 25)
+  } catch {
+    // Logo failed to load, continue without it
+  }
+
+  // Title (centered, accounting for logo)
+  doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
-  doc.text('Product Group Sales Report', pageWidth / 2, 18, { align: 'center' })
+  doc.setTextColor(0)
+  doc.text('Product Group Sales Report', pageWidth / 2 + 10, 18, { align: 'center' })
 
   // Dealer info
-  doc.setFontSize(12)
+  doc.setFontSize(11)
   doc.setFont('helvetica', 'normal')
-  doc.text(`${options.dealerName}`, pageWidth / 2, 26, { align: 'center' })
-  doc.setFontSize(10)
-  doc.text(`Account #${options.accountNumber}`, pageWidth / 2, 32, { align: 'center' })
+  doc.text(`${options.dealerName}`, pageWidth / 2 + 10, 26, { align: 'center' })
+  doc.setFontSize(9)
+  doc.text(`Account #${options.accountNumber}`, pageWidth / 2 + 10, 32, { align: 'center' })
 
   // Period
   const periodLabel = getPeriodLabel(options.periodType, options.year, options.month)
-  doc.text(`Period: ${periodLabel}`, pageWidth / 2, 38, { align: 'center' })
+  doc.text(`Period: ${periodLabel}`, pageWidth / 2 + 10, 38, { align: 'center' })
 
   // Report date
   doc.setFontSize(8)
   doc.setTextColor(128)
-  doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, 44, { align: 'center' })
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth - 14, 38, { align: 'right' })
   doc.setTextColor(0)
 
-  // Draw the bar chart
-  let currentY = drawHorizontalBarChart(doc, data, 54, 10)
+  let currentY = 48
 
-  // Check if we need a new page for the table
-  if (currentY > pageHeight - 80) {
-    doc.addPage()
-    currentY = 20
-  }
-
-  // === Detailed Comparison Table ===
+  // === 1. DETAILED COMPARISON TABLE (First) ===
   doc.setFontSize(11)
   doc.setFont('helvetica', 'bold')
   doc.text('Detailed Comparison', 14, currentY)
@@ -359,7 +369,7 @@ export function exportProductGroupsToPDF(
 
   currentY = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10
 
-  // === Monthly Product Mix Grid ===
+  // === 2. MONTHLY PRODUCT MIX GRID (Second) ===
   if (options.monthlyMixData && options.monthlyMixData.length > 0) {
     // Check if we need a new page
     if (currentY > pageHeight - 60) {
@@ -370,14 +380,25 @@ export function exportProductGroupsToPDF(
     currentY = drawMonthlyMixGrid(doc, options.monthlyMixData, currentY, options.year)
   }
 
-  // Footer
-  const finalY = currentY
-  doc.setFontSize(8)
-  doc.setTextColor(128)
+  // === 3. SALES BY PRODUCT GROUP CHART (Last) ===
+  // Check if we need a new page for the chart
+  const chartHeight = Math.min(data.length, 10) * 16 + 30
+  if (currentY > pageHeight - chartHeight) {
+    doc.addPage()
+    currentY = 20
+  }
 
-  // Check if footer fits, otherwise put on current position
-  const footerY = finalY > pageHeight - 20 ? pageHeight - 10 : finalY + 5
-  doc.text('Elias Wilf Company - Confidential', pageWidth / 2, footerY, { align: 'center' })
+  currentY = drawHorizontalBarChart(doc, data, currentY, 10)
+
+  // Footer on each page
+  const totalPages = doc.getNumberOfPages()
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i)
+    doc.setFontSize(8)
+    doc.setTextColor(128)
+    doc.text('Elias Wilf Company - Confidential', pageWidth / 2, pageHeight - 10, { align: 'center' })
+    doc.text(`Page ${i} of ${totalPages}`, pageWidth - 14, pageHeight - 10, { align: 'right' })
+  }
 
   // Save the PDF
   const fileName = `${options.dealerName.replace(/[^a-z0-9]/gi, '_')}_Product_Groups_${periodLabel.replace(/\s+/g, '_')}.pdf`
