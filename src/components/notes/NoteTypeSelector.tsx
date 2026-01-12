@@ -16,7 +16,8 @@ const NOTE_TYPES: NoteType[] = [
   'issue',
   'quote',
   'order',
-  'personal'
+  'personal',
+  'promotion'
 ]
 
 export function NoteTypeSelector({ value, onChange }: NoteTypeSelectorProps) {

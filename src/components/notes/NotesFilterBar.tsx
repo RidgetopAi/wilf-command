@@ -34,7 +34,8 @@ const NOTE_TYPES: (NoteType | 'all')[] = [
   'issue',
   'quote',
   'order',
-  'personal'
+  'personal',
+  'promotion'
 ]
 
 export function NotesFilterBar({ onFilterChange, tags, initialFilters }: NotesFilterBarProps) {
