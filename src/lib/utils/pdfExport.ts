@@ -93,7 +93,7 @@ function drawVerticalBarChart(
   const chartMarginRight = 14
   const chartWidth = pageWidth - chartMarginLeft - chartMarginRight
   const chartHeight = 55  // Fixed height for bars
-  const labelHeight = 25  // Space for rotated labels
+  const labelHeight = 10  // Space for labels
   const chartData = data.slice(0, maxItems)
 
   // Calculate bar dimensions
@@ -176,27 +176,15 @@ function drawVerticalBarChart(
       )
     }
 
-    // Product name (rotated at bottom)
+    // Product name (horizontal, centered under bar group)
     doc.setFontSize(5)
     doc.setTextColor(50)
-    const truncatedName = item.product_group.length > 12
-      ? item.product_group.substring(0, 10) + '..'
+    const truncatedName = item.product_group.length > 10
+      ? item.product_group.substring(0, 8) + '..'
       : item.product_group
 
-    // Save state, rotate, draw text, restore
-    const labelX = groupX + groupWidth / 2 - 1
-    const labelY = barsBaseY + 3
-
-    doc.saveGraphicsState()
-    // Rotate 45 degrees for angled labels
-    const angle = -45 * Math.PI / 180
-    const cos = Math.cos(angle)
-    const sin = Math.sin(angle)
-    doc.setCurrentTransformationMatrix(
-      doc.Matrix(cos, sin, -sin, cos, labelX - labelX * cos + labelY * sin, labelY - labelX * sin - labelY * cos)
-    )
-    doc.text(truncatedName, labelX, labelY)
-    doc.restoreGraphicsState()
+    const labelX = groupX + groupWidth / 2
+    doc.text(truncatedName, labelX, barsBaseY + 5, { align: 'center' })
   })
 
   return currentY + totalChartHeight + 5
