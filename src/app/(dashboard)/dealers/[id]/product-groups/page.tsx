@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, BarChart3, Loader2 } from 'lucide-react'
+import { ArrowLeft, BarChart3, Loader2, FileDown } from 'lucide-react'
 import { PeriodType, Dealer } from '@/types'
 import { PeriodSelector, ProductGroupChart, ProductGroupTable } from '@/components/product-groups'
 import { useProductGroupComparison } from '@/lib/hooks/useProductGroupSales'
 import { createClient } from '@/lib/supabase/client'
+import { exportProductGroupsToPDF } from '@/lib/utils/pdfExport'
 
 interface ProductGroupsPageProps {
   params: Promise<{ id: string }>
@@ -60,6 +61,18 @@ export default function ProductGroupsPage({ params }: ProductGroupsPageProps) {
 
   const isLoading = isLoadingDealer || isLoadingData
 
+  const handleExportPDF = () => {
+    if (!dealer || !productGroups || productGroups.length === 0) return
+
+    exportProductGroupsToPDF(productGroups, {
+      dealerName: dealer.dealer_name,
+      accountNumber: dealer.account_number,
+      periodType,
+      year,
+      month
+    })
+  }
+
   if (isLoadingDealer) {
     return (
       <div className="px-4 sm:px-6 lg:px-8 py-8">
@@ -93,12 +106,22 @@ export default function ProductGroupsPage({ params }: ProductGroupsPageProps) {
         </Link>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <BarChart3 className="h-6 w-6 text-indigo-600" />
-          Product Groups
-        </h1>
-        <p className="text-sm text-gray-500">{dealer.dealer_name} - #{dealer.account_number}</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <BarChart3 className="h-6 w-6 text-indigo-600" />
+            Product Groups
+          </h1>
+          <p className="text-sm text-gray-500">{dealer.dealer_name} - #{dealer.account_number}</p>
+        </div>
+        <button
+          onClick={handleExportPDF}
+          disabled={!productGroups || productGroups.length === 0 || isLoading}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <FileDown className="h-4 w-4" />
+          Export PDF
+        </button>
       </div>
 
       {/* Period Selector */}
