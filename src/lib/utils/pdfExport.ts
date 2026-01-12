@@ -82,19 +82,24 @@ function getCategoryLabel(category: string): string {
   return labels[category] || category
 }
 
-function drawHorizontalBarChart(
+function drawVerticalBarChart(
   doc: jsPDF,
   data: ProductGroupSummary[],
   startY: number,
   maxItems: number = 10
 ): number {
   const pageWidth = doc.internal.pageSize.getWidth()
-  const chartMarginLeft = 55
-  const chartMarginRight = 15
+  const chartMarginLeft = 14
+  const chartMarginRight = 14
   const chartWidth = pageWidth - chartMarginLeft - chartMarginRight
-  const barHeight = 6  // Reduced from 12
-  const barGap = 2     // Reduced from 4
+  const chartHeight = 55  // Fixed height for bars
+  const labelHeight = 25  // Space for rotated labels
   const chartData = data.slice(0, maxItems)
+
+  // Calculate bar dimensions
+  const groupWidth = chartWidth / chartData.length
+  const barWidth = (groupWidth - 4) / 2  // Two bars per group with gap
+  const barGap = 2
 
   // Find max value for scaling
   const maxValue = Math.max(...chartData.flatMap(d => [d.current_sales, d.prior_sales]))
@@ -109,69 +114,92 @@ function drawHorizontalBarChart(
   currentY += 6
 
   // Draw border around chart area
-  const chartAreaHeight = chartData.length * (barHeight * 2 + barGap) + 20
+  const totalChartHeight = chartHeight + labelHeight + 15
   doc.setDrawColor(200, 200, 200)
   doc.setLineWidth(0.5)
-  doc.rect(14, currentY - 2, pageWidth - 28, chartAreaHeight)
+  doc.rect(chartMarginLeft, currentY, chartWidth, totalChartHeight)
 
   currentY += 4
 
-  // Draw legend
-  doc.setFontSize(7)
+  // Draw legend (top right of chart)
+  doc.setFontSize(6)
   doc.setFont('helvetica', 'normal')
   doc.setFillColor(79, 70, 229)
-  doc.rect(18, currentY - 3, 8, 4, 'F')
+  doc.rect(pageWidth - 70, currentY, 6, 3, 'F')
   doc.setTextColor(0)
-  doc.text('Current Year', 28, currentY)
+  doc.text('Current', pageWidth - 62, currentY + 2.5)
   doc.setFillColor(209, 213, 219)
-  doc.rect(60, currentY - 3, 8, 4, 'F')
-  doc.text('Prior Year', 70, currentY)
-  currentY += 6
+  doc.rect(pageWidth - 40, currentY, 6, 3, 'F')
+  doc.text('Prior', pageWidth - 32, currentY + 2.5)
+
+  const barsStartY = currentY + 8
+  const barsBaseY = barsStartY + chartHeight  // Bottom of bars
 
   // Draw bars
   chartData.forEach((item, idx) => {
-    const currentBarWidth = maxValue > 0 ? (item.current_sales / maxValue) * chartWidth : 0
-    const priorBarWidth = maxValue > 0 ? (item.prior_sales / maxValue) * chartWidth : 0
-    const barY = currentY + idx * (barHeight * 2 + barGap)
+    const groupX = chartMarginLeft + idx * groupWidth + 2
 
-    // Product name
-    doc.setFontSize(6)
-    doc.setTextColor(50)
-    const truncatedName = item.product_group.length > 20
-      ? item.product_group.substring(0, 17) + '...'
-      : item.product_group
-    doc.text(truncatedName, chartMarginLeft - 2, barY + 3, { align: 'right' })
+    // Calculate bar heights (from bottom up)
+    const currentBarHeight = maxValue > 0 ? (item.current_sales / maxValue) * chartHeight : 0
+    const priorBarHeight = maxValue > 0 ? (item.prior_sales / maxValue) * chartHeight : 0
 
     // Current year bar (colored by category)
     const color = CATEGORY_COLORS[item.category] || CATEGORY_COLORS['']
     doc.setFillColor(color[0], color[1], color[2])
-    doc.rect(chartMarginLeft, barY, Math.max(currentBarWidth, 1), barHeight - 1, 'F')
+    doc.rect(groupX, barsBaseY - currentBarHeight, barWidth, currentBarHeight, 'F')
 
     // Prior year bar (gray)
     doc.setFillColor(209, 213, 219)
-    doc.rect(chartMarginLeft, barY + barHeight, Math.max(priorBarWidth, 1), barHeight - 1, 'F')
+    doc.rect(groupX + barWidth + barGap, barsBaseY - priorBarHeight, barWidth, priorBarHeight, 'F')
 
-    // Value labels - Current year
+    // Value labels above bars
     doc.setFontSize(5)
-    if (currentBarWidth > 20) {
-      doc.setTextColor(255)
-      doc.text(formatCurrencyCompact(item.current_sales), chartMarginLeft + currentBarWidth - 2, barY + 4, { align: 'right' })
-    } else {
-      doc.setTextColor(80)
-      doc.text(formatCurrencyCompact(item.current_sales), chartMarginLeft + currentBarWidth + 2, barY + 4)
+    doc.setTextColor(50)
+
+    // Current year value
+    if (item.current_sales > 0) {
+      doc.text(
+        formatCurrencyCompact(item.current_sales),
+        groupX + barWidth / 2,
+        barsBaseY - currentBarHeight - 2,
+        { align: 'center' }
+      )
     }
 
-    // Value labels - Prior year
-    if (priorBarWidth > 20) {
-      doc.setTextColor(100)
-      doc.text(formatCurrencyCompact(item.prior_sales), chartMarginLeft + priorBarWidth - 2, barY + barHeight + 4, { align: 'right' })
-    } else {
-      doc.setTextColor(100)
-      doc.text(formatCurrencyCompact(item.prior_sales), chartMarginLeft + priorBarWidth + 2, barY + barHeight + 4)
+    // Prior year value
+    if (item.prior_sales > 0) {
+      doc.text(
+        formatCurrencyCompact(item.prior_sales),
+        groupX + barWidth + barGap + barWidth / 2,
+        barsBaseY - priorBarHeight - 2,
+        { align: 'center' }
+      )
     }
+
+    // Product name (rotated at bottom)
+    doc.setFontSize(5)
+    doc.setTextColor(50)
+    const truncatedName = item.product_group.length > 12
+      ? item.product_group.substring(0, 10) + '..'
+      : item.product_group
+
+    // Save state, rotate, draw text, restore
+    const labelX = groupX + groupWidth / 2 - 1
+    const labelY = barsBaseY + 3
+
+    doc.saveGraphicsState()
+    // Rotate 45 degrees for angled labels
+    const angle = -45 * Math.PI / 180
+    const cos = Math.cos(angle)
+    const sin = Math.sin(angle)
+    doc.setCurrentTransformationMatrix(
+      doc.Matrix(cos, sin, -sin, cos, labelX - labelX * cos + labelY * sin, labelY - labelX * sin - labelY * cos)
+    )
+    doc.text(truncatedName, labelX, labelY)
+    doc.restoreGraphicsState()
   })
 
-  return currentY + chartData.length * (barHeight * 2 + barGap) + 8
+  return currentY + totalChartHeight + 5
 }
 
 function drawMonthlyMixGrid(
@@ -397,7 +425,7 @@ export function exportProductGroupsToPDF(
     currentY = 20
   }
 
-  currentY = drawHorizontalBarChart(doc, data, currentY, 10)
+  currentY = drawVerticalBarChart(doc, data, currentY, 10)
 
   // Footer on each page
   const totalPages = doc.getNumberOfPages()
