@@ -53,3 +53,4 @@ data/*.xls
 data/*.xlsx
 data/*.xls:Zone.Identifier
 data/*.xlsx:Zone.Identifier
+.surveyor/

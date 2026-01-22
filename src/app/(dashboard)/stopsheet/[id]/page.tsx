@@ -201,7 +201,7 @@ export default function StopSheetExecutionPage({
   const progressPercent = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0
 
   return (
-    <div className="p-4 sm:p-6 max-w-2xl mx-auto pb-24">
+    <div className="p-4 sm:p-6 max-w-2xl mx-auto pb-40 sm:pb-24">
       {/* Header */}
       <div className="flex items-center gap-3 mb-2">
         <Link
@@ -295,7 +295,7 @@ export default function StopSheetExecutionPage({
       )}
 
       {/* Bottom Actions */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 flex gap-3 max-w-2xl mx-auto">
+      <div className="fixed bottom-16 sm:bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 flex gap-3 max-w-2xl mx-auto z-40">
         {isLocked ? (
           <>
             <button
