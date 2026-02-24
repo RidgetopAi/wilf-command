@@ -67,7 +67,7 @@ export function AttachmentUploader({
   dealerId,
   onUploadComplete,
   onPendingChange,
-  maxFiles = 5,
+  maxFiles = 10,
   maxSizeMB = 10
 }: AttachmentUploaderProps) {
   const [pending, setPending] = useState<PendingAttachment[]>([])
