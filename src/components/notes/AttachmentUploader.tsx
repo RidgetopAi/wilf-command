@@ -136,14 +136,15 @@ export function AttachmentUploader({
     const updatedPending = [...pending, ...newFiles]
     updatePending(updatedPending)
 
-    // Upload each valid file
-    for (const item of newFiles) {
-      if (item.error) continue
-      await uploadFile(item, updatedPending)
-    }
+    // Upload all valid files in parallel
+    await Promise.all(
+      newFiles
+        .filter(item => !item.error)
+        .map(item => uploadFile(item))
+    )
   }
 
-  const uploadFile = async (item: PendingAttachment, currentPending: PendingAttachment[]) => {
+  const uploadFile = async (item: PendingAttachment) => {
     const supabase = createClient()
 
     // Get reliable MIME type for upload
@@ -162,15 +163,16 @@ export function AttachmentUploader({
         contentType: mimeType
       })
 
-    const updatedPending = currentPending.map(p => {
-      if (p.id !== item.id) return p
-      if (error) {
-        return { ...p, uploading: false, error: 'Upload failed' }
-      }
-      return { ...p, uploading: false, storagePath }
+    // Functional update to avoid stale state when multiple uploads finish concurrently
+    setPending(prev => {
+      const updated = prev.map(p => {
+        if (p.id !== item.id) return p
+        if (error) return { ...p, uploading: false, error: 'Upload failed' }
+        return { ...p, uploading: false, storagePath }
+      })
+      onPendingChange?.(updated)
+      return updated
     })
-
-    updatePending(updatedPending)
 
     if (!error) {
       onUploadComplete?.({
