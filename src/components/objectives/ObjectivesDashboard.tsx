@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { CheckCircle2, Circle, Target, Loader2 } from 'lucide-react'
+import { CheckCircle2, Circle, Target, Loader2, FileText } from 'lucide-react'
 import { AduraObjective, ObjectiveCategory, OBJECTIVE_CATEGORY_LABELS } from '@/types'
 import { getObjectives } from '@/lib/api/objectives'
 import { togglePresented } from '@/app/(dashboard)/objectives/actions'
@@ -191,6 +191,7 @@ export function ObjectivesDashboard({ repId }: ObjectivesDashboardProps) {
                   <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">2025 $</th>
                   <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">2026 YTD</th>
                   <th className="hidden sm:table-cell px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Comments</th>
+                  <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase w-12"></th>
                 </tr>
               </thead>
               <tbody>
@@ -237,6 +238,17 @@ export function ObjectivesDashboard({ repId }: ObjectivesDashboardProps) {
                     <td className="hidden sm:table-cell px-4 py-2 text-sm text-gray-500 max-w-xs truncate">
                       {obj.comments}
                     </td>
+                    <td className="px-4 py-2 text-center">
+                      {obj.dealer_id && (
+                        <Link
+                          href={`/notes?newNote=true&dealerId=${obj.dealer_id}`}
+                          className="inline-flex p-1 text-gray-400 hover:text-indigo-600 rounded hover:bg-indigo-50 transition-colors"
+                          title={`Add note for ${obj.dealer_name}`}
+                        >
+                          <FileText className="w-4 h-4" />
+                        </Link>
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {/* Category subtotal */}
@@ -252,6 +264,7 @@ export function ObjectivesDashboard({ repId }: ObjectivesDashboardProps) {
                     {formatCurrency(items.reduce((sum, o) => sum + (o.adura_2026_sales || 0), 0))}
                   </td>
                   <td className="hidden sm:table-cell px-4 py-2"></td>
+                  <td className="px-4 py-2"></td>
                 </tr>
               </tbody>
             </table>

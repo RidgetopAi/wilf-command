@@ -33,6 +33,8 @@ export default function NotesPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const noteIdParam = searchParams.get('noteId')
+  const newNoteParam = searchParams.get('newNote')
+  const dealerIdParam = searchParams.get('dealerId')
 
   const [notes, setNotes] = useState<Note[]>([])
   const [filteredNotes, setFilteredNotes] = useState<Note[]>([])
@@ -43,6 +45,7 @@ export default function NotesPage() {
 
   const [showNoteForm, setShowNoteForm] = useState(false)
   const [editingNote, setEditingNote] = useState<Note | null>(null)
+  const [preselectedDealerId, setPreselectedDealerId] = useState<string | null>(null)
   const [viewingNote, setViewingNote] = useState<Note | null>(null)
   const [filters, setFilters] = useState<NotesFilterState>({})
 
@@ -144,6 +147,16 @@ export default function NotesPage() {
       }
     }
   }, [noteIdParam, notes, viewingNote, router])
+
+  // Auto-open note form with dealer pre-selected (e.g., /notes?newNote=true&dealerId=xxx)
+  useEffect(() => {
+    if (newNoteParam === 'true' && !isLoading && !showNoteForm) {
+      setPreselectedDealerId(dealerIdParam)
+      setEditingNote(null)
+      setShowNoteForm(true)
+      router.replace('/notes', { scroll: false })
+    }
+  }, [newNoteParam, dealerIdParam, isLoading, showNoteForm, router])
 
   // Apply filters when they change
   const applyFilters = useCallback((notes: Note[], filters: NotesFilterState): Note[] => {
@@ -365,12 +378,13 @@ export default function NotesPage() {
       {showNoteForm && (
         <NoteForm
           key={editingNote?.id ?? 'new'}
+          dealerId={preselectedDealerId}
           note={editingNote || undefined}
           tags={tags}
           dealers={dealers}
           events={events}
           onSave={handleSaveNote}
-          onCancel={handleCancelNote}
+          onCancel={() => { handleCancelNote(); setPreselectedDealerId(null) }}
           onTagCreate={handleCreateTag}
           onAttachmentAdd={handleAttachmentAdd}
           onAttachmentDelete={handleAttachmentDelete}
