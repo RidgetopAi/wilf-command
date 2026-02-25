@@ -15,6 +15,7 @@ export function MobileTabBar({ isManager = false }: MobileTabBarProps) {
     { href: '/', label: 'Command', icon: LayoutDashboard },
     { href: '/dealers', label: 'Dealers', icon: Store },
     { href: '/travel-calendar', label: 'Travel', icon: Calendar },
+    { href: '/objectives', label: 'Objectives', icon: Target },
     { href: '/notes', label: 'Notes', icon: FileText },
     { href: '/stopsheet', label: 'StopSheet', icon: ClipboardCheck },
     ...(isManager ? [{ href: '/manager', label: 'Manager', icon: Shield }] : []),

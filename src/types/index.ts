@@ -460,6 +460,35 @@ export interface ProductGroupSales {
   updated_at: string
 }
 
+// =============================================
+// ADURA OBJECTIVES
+// =============================================
+
+export type ObjectiveCategory = 'up' | 'rollback' | 'lock_in'
+
+export const OBJECTIVE_CATEGORY_LABELS: Record<ObjectiveCategory, string> = {
+  up: 'Under Performing',
+  rollback: 'Rollback',
+  lock_in: 'Adura Lock-In'
+}
+
+export interface AduraObjective {
+  id: string
+  rep_id: string
+  account_number: string
+  display_type: string | null
+  adura_2025_sales: number
+  category: ObjectiveCategory
+  presented: boolean
+  comments: string | null
+  created_at: string
+  updated_at: string
+  // Joined
+  dealer_name?: string
+  dealer_id?: string
+  adura_2026_sales?: number
+}
+
 export interface ProductGroupSummary {
   product_group: string
   category: string
