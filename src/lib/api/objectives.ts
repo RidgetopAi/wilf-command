@@ -25,12 +25,14 @@ export async function getObjectives(repId: string): Promise<AduraObjective[]> {
     dealers?.map(d => [d.account_number, { id: d.id, name: d.dealer_name }]) || []
   )
 
-  // 3. Get 2026 YTD adura sales per account
+  // 3. Get 2026 YTD adura sales for objective accounts only
+  const accountNumbers = objectives.map(o => o.account_number)
   const { data: mixData } = await supabase
     .from('product_mix_monthly')
     .select('account_number, adura_sales')
     .eq('rep_id', repId)
     .eq('year', 2026)
+    .in('account_number', accountNumbers)
 
   const aduraSalesMap = new Map<string, number>()
   for (const row of (mixData || [])) {
